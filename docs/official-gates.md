@@ -13,6 +13,16 @@ Current official sources: [contest overview](https://allthingsagentichackathon.d
 - The Fortified Enterprise Fleet judging text asks whether the multi-agent complexity is warranted, specialist delegation is real, and the product serves an “unlikely hero” outside standard corporate roles.
 - The $150 credit request deadline was August 28, 2026 at noon PT or while supplies lasted. Credits were never guaranteed, so this package assumes no contest credit.
 
+## No-billing alternatives audited
+
+Official Google documentation was rechecked on 2026-08-31 before treating billing as an unavoidable gate:
+
+- [Firebase AI Logic](https://firebase.google.com/docs/ai-logic/get-started?platform=web) can call the Gemini Developer API from a web client on the no-cost Spark plan when protected by production App Check, and [Firestore](https://firebase.google.com/docs/firestore/pricing) has a limited free quota. That path does not run this repository's Python Google ADK backend, durable queue, or fail-closed server policy. Replacing the proven backend with direct client calls would be a different architecture and must not be represented as deployment of FourProof Fleet.
+- [Google AI Studio Starter Tier](https://ai.google.dev/gemini-api/docs/aistudio-deploying) can publish up to two eligible full-stack Node.js applications to Cloud Run without a billing account. Google excludes users with an active or prior Google Cloud billing account and some Workspace accounts, and availability is confirmed only in the applicant's AI Studio flow. It is not a drop-in deployment target for this Python ADK container, Firestore transaction store, or Pub/Sub/OIDC queue. No Starter Tier eligibility or publication is claimed.
+- [Standard Cloud Run deployment](https://cloud.google.com/run/docs/quickstarts/deploy-container) requires a billing-enabled project. This remains the minimum faithful deployment path for the tested architecture.
+
+The project will not weaken or relabel its architecture merely to obtain a nominal free URL. A different runtime would need its own implementation, tests, architecture, video proof, and truthful framework claims.
+
 ## Applicant-owned actions
 
 - Determine personal eligibility and employer-policy compliance.
