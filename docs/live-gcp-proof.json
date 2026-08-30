@@ -1,0 +1,41 @@
+{
+  "capturedAt": "2026-08-30T19:37:04.764292+00:00",
+  "infrastructure": {
+    "cloudLoggingEntriesObserved": 6,
+    "firestoreMissionObserved": true,
+    "liveMissionBudget": {
+      "limit": 8,
+      "usedAfter": 1,
+      "usedBefore": 0
+    }
+  },
+  "mission": {
+    "action": "quarantine",
+    "engine": "gemini_adk",
+    "eventStages": [
+      "intake",
+      "runtime",
+      "scout",
+      "identity",
+      "guard",
+      "judge",
+      "receipt"
+    ],
+    "evidenceSetSha256": "39d8f18220d209f88812a08905877c80e41a1c50b8d362b51e2bde64623b5f7c",
+    "missionId": "aa919f3ac5eb4cf68c0aed1b51d721f8",
+    "receiptSha256": "e3b50bcb3d5b23e4a54733e56820abbf11ec7449c20080429ab11cb260f9708a",
+    "status": "completed"
+  },
+  "schemaVersion": 1,
+  "service": {
+    "gitSha": "6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f",
+    "googleAdk": "2.8.0",
+    "model": "gemini-3.5-flash",
+    "queue": "pubsub",
+    "revision": "fourproof-fleet-00014-d5p",
+    "runtime": "google-cloud-run",
+    "store": "firestore",
+    "url": "https://fourproof-fleet-7bow5ev35a-uc.a.run.app"
+  },
+  "source": "observed live Google Cloud state"
+}

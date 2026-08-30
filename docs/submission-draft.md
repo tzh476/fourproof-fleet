@@ -42,7 +42,7 @@ The React/Vite frontend also includes read-only BSC ERC-8004 identity discovery 
 
 ## Challenges we ran into
 
-The hardest design problem was preventing the reviewer from becoming the attack surface. A naive “send this URL to an LLM” implementation risks SSRF, prompt injection, and false identity claims. We therefore separated bounded evidence collection from model judgment, removed redirects and credentials, used typed outputs, and treated all card text as quoted evidence. Another challenge was making retries auditable: queue redelivery, durable state, terminal idempotency, and failure events had to agree.
+The hardest design problem was preventing the reviewer from becoming the attack surface. A naive “send this URL to an LLM” implementation risks SSRF, prompt injection, and false identity claims. We therefore separated bounded evidence collection from model judgment, removed redirects and credentials, used typed outputs, and treated all card text as quoted evidence. Another challenge was making retries auditable: queue redelivery, durable state, terminal idempotency, and failure events had to agree. Live Gemini runs exposed real schema variation—one verdict returned a scalar where a list was expected—so we added bounded normalization for known scalar fields while continuing to reject unknown evidence identifiers. The final non-fixture mission completed without weakening the fail-closed boundary.
 
 ## Accomplishments that we are proud of
 
@@ -53,6 +53,7 @@ The hardest design problem was preventing the reviewer from becoming the attack 
 - Explicit runtime disclosure: deterministic fixtures cannot masquerade as Gemini or Google Cloud execution.
 - A durable, Git-bound live mission budget plus per-run model-call and output-token ceilings.
 - Adversarial tests for prompt injection, SSRF, forged queue delivery, duplicate execution, and benign-but-unverified agents.
+- A completed non-fixture Gemini 3.5 Flash mission on the exact public Git SHA, with a quarantine verdict, all seven expected stages, durable Firestore state, Pub/Sub delivery, six correlated Cloud Logging entries, and separate evidence/decision hashes.
 
 ## What we learned
 
@@ -70,16 +71,16 @@ Agent identity, capability, and safety are different claims. Registry presence p
 
 Gemini 3.5 Flash, Google Agent Development Kit, Cloud Run, Firestore, Pub/Sub, Cloud Logging, Vertex AI, FastAPI, Pydantic, React, TypeScript, Vite, viem, BSC ERC-8004.
 
-## Links (replace after live verification)
+## Links
 
-- Demo: `[TBD_CLOUD_RUN_URL]`
-- Repository: `[TBD_PUBLIC_REPOSITORY_URL]`
+- Demo: `https://fourproof-fleet-7bow5ev35a-uc.a.run.app`
+- Repository: `https://github.com/tzh476/fourproof-fleet`
 - Video: `[TBD_PUBLIC_YOUTUBE_OR_VIMEO_URL]`
-- Architecture: `docs/architecture.svg`
+- Architecture: `https://github.com/tzh476/fourproof-fleet/blob/main/docs/architecture.svg`
 
 ## Reproducibility
 
-Run `npm run check` for frontend tests, backend/security tests, TypeScript checking, and a production build. Local deterministic fixtures are clearly labeled and require no credentials. The submitted video must show a separate real Gemini/ADK mission with `engine=gemini_adk` and live Google Cloud state.
+Run `npm run check` for frontend tests, backend/security tests, TypeScript checking, and a production build. Local deterministic fixtures are clearly labeled and require no credentials. The final video is bound to public commit `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` and shows the sanitized state of a separate real Gemini/ADK mission with `engine=gemini_adk`; `docs/live-gcp-proof.json` records the exact observed cloud evidence without credentials or billing identifiers.
 
 ## Contest-period and reused-work disclosure
 

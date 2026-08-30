@@ -166,23 +166,24 @@ python3 scripts/live_proof.py \
 
 ## Verification status
 
-Verified locally on 2026-08-30:
+Verified locally and against the bounded Google Cloud deployment on 2026-08-31:
 
 - 13 frontend/domain tests passed;
-- 37 Python API/security/ADK graph/queue/live-proof tests passed;
+- 45 Python API/security/ADK graph/queue/live-proof tests passed;
 - TypeScript production build passed;
 - Python dependency consistency passed;
 - browser QA loaded the live BSC registry and handled its changing category result counts without treating discovery as endorsement;
 - the production-built UI ran the poisoned mission end to end and sealed a `quarantine` receipt;
+- public commit `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` is served by Cloud Run revision `fourproof-fleet-00014-d5p`;
+- one non-fixture Gemini 3.5 Flash / Google ADK mission completed with `quarantine`, durable Firestore state, Pub/Sub delivery, six correlated log entries, and separate evidence/decision hashes recorded in [`docs/live-gcp-proof.json`](docs/live-gcp-proof.json);
+- the local final English video is 180.902667 seconds, 1920×1080 H.264/AAC, and passed full decode plus four-frame visual inspection;
 - `npm audit` reported zero vulnerabilities.
 
 Not yet verified:
 
-- a real Gemini invocation (credentials are not present locally);
-- Firestore/Pub/Sub execution against a Google Cloud project;
-- Cloud Run deployment and logs;
-- the public four-minute video;
-- Devpost entry receipt.
+- a public YouTube/Vimeo URL for the final video;
+- a Devpost project or entry receipt;
+- any contest award or payment.
 
 Those states must not be inferred from code or green local tests.
 
