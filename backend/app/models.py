@@ -110,6 +110,13 @@ class ModelVerdict(BaseModel):
         return value
 
 
+class EvidenceProvenance(BaseModel):
+    evidence_id: Literal["agent-card", "serpapi-search"]
+    provider: str = Field(max_length=100)
+    observed: str = Field(max_length=500)
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class MissionVerdict(BaseModel):
     action: Literal["allow_sandbox", "human_review", "quarantine"]
     confidence: float = Field(ge=0, le=1)
@@ -118,6 +125,7 @@ class MissionVerdict(BaseModel):
     required_controls: list[str]
     evidence_ids: list[str]
     evidence_sha256: list[str] = Field(default_factory=list)
+    evidence_provenance: list[EvidenceProvenance] = Field(default_factory=list, max_length=3)
     evidence_set_sha256: str = ""
     receipt_sha256: str = ""
     engine: Literal["gemini_adk", "deterministic_demo"] = "gemini_adk"

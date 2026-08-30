@@ -21,6 +21,14 @@ The product is built for the **Fortified Enterprise Fleet** category of the All 
 5. **Receipt Sealer** produces a stable evidence-set hash, a run-specific canonical SHA-256 decision receipt, and a durable event stream.
 6. **Lifecycle Recheck** links a later review to the previous mission while preserving the review cadence, stable evidence comparison, and receipt history across sessions.
 
+When `SERPAPI_API_KEY` is configured, the Registry Scout also queries the
+SerpApi Google Search API for a bounded set of public pages about the target
+host. Only three sanitized organic results enter the evidence packet; the API
+credential never enters logs, mission records, model prompts, or receipts. The
+sanitized search packet receives its own SHA-256 hash and is sealed alongside
+the exact AgentCard snapshot. A configured SerpApi failure stops the mission
+instead of silently degrading to unverified evidence.
+
 The Google ADK workflow graph is a real fan-out/fan-in topology:
 
 ```text
@@ -94,7 +102,19 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 export GOOGLE_CLOUD_LOCATION="global"
 ```
 
-Never commit either an API key or application-default credential file.
+### Optional SerpApi evidence mode
+
+```bash
+export SERPAPI_API_KEY="your-serpapi-key"
+```
+
+When the key is absent, missions keep the original AgentCard-only evidence
+path. When it is present, SerpApi becomes a required second evidence source and
+an upstream error fails the mission closed. For a hosted deployment, inject the
+key from the platform's secret manager; do not add it to the deploy script,
+container image, repository, logs, or submission materials.
+
+Never commit an API key or application-default credential file.
 
 ## API
 

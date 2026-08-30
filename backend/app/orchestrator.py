@@ -16,6 +16,7 @@ from .agents import (
     build_specialist_agents,
 )
 from .models import (
+    EvidenceProvenance,
     GuardFinding,
     IdentityFinding,
     MissionEvent,
@@ -25,6 +26,7 @@ from .models import (
     ScoutFinding,
 )
 from .safety import sha256_json
+from .serpapi import search_public_evidence
 from .tools import (
     bind_agent_card_snapshot,
     fetch_agent_card,
@@ -170,6 +172,14 @@ async def deterministic_demo(request: MissionRequest, emit: EventSink) -> Missio
         ],
         required_controls=["isolated sandbox", "no production secrets", "human approval before activation"],
         evidence_ids=["scout-card", "identity-claim", "guard-scan"],
+        evidence_provenance=[
+            EvidenceProvenance(
+                evidence_id="agent-card",
+                provider="FourProof deterministic fixture",
+                observed=f"Bound demo fixture {request.demo_case} to the requested target.",
+                sha256=scout["source_sha256"],
+            )
+        ],
         engine="deterministic_demo",
     )
     verdict = seal_verdict(verdict, [scout["source_sha256"]])
@@ -182,12 +192,15 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
     snapshot = await fetch_agent_card(str(request.target_url), request.demo_case or "")
     snapshot_token = bind_agent_card_snapshot(snapshot)
     try:
-        scout_input, identity_input, guard_input = await asyncio.gather(
+        scout_input, identity_input, guard_input, search_evidence = await asyncio.gather(
             summarize_card(str(request.target_url), request.demo_case or ""),
             inspect_registry_claim(str(request.target_url), request.demo_case or ""),
             inspect_tool_boundary(str(request.target_url), request.demo_case or ""),
+            search_public_evidence(str(request.target_url)),
         )
         scout_input.pop("raw_card_json", None)
+        if search_evidence:
+            scout_input["live_search_evidence"] = search_evidence["evidence"]
         specialists = build_specialist_agents()
         specialist_inputs = (scout_input, identity_input, guard_input)
         specialist_keys = ("scout_input", "identity_input", "guard_input")
@@ -257,6 +270,30 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
     model_verdict = ModelVerdict.model_validate(parsed)
     verdict = MissionVerdict.model_validate({**model_verdict.model_dump(), "engine": "gemini_adk"})
     verdict = enforce_runtime_policy(verdict, identity_input, guard_input)
-    verdict = seal_verdict(verdict, [snapshot["sha256"]])
+    evidence_hashes = [snapshot["sha256"]]
+    provenance = [
+        EvidenceProvenance(
+            evidence_id="agent-card",
+            provider="Target AgentCard",
+            observed=f"Fetched one immutable AgentCard snapshot from {request.target_url}.",
+            sha256=snapshot["sha256"],
+        )
+    ]
+    if search_evidence:
+        evidence_hashes.append(search_evidence["sha256"])
+        search_packet = search_evidence["evidence"]
+        provenance.append(
+            EvidenceProvenance(
+                evidence_id="serpapi-search",
+                provider=search_packet["provider"],
+                observed=(
+                    f"Observed {search_packet['result_count']} bounded organic result(s) for "
+                    f"{search_packet['target_host']} using {search_packet['query']}."
+                ),
+                sha256=search_evidence["sha256"],
+            )
+        )
+    verdict = verdict.model_copy(update={"evidence_provenance": provenance})
+    verdict = seal_verdict(verdict, evidence_hashes)
     await emit(MissionEvent(sequence=9, stage="judge", status="completed", title="Policy Judge", detail=f"Gemini ADK decision: {verdict.action}."))
     return verdict

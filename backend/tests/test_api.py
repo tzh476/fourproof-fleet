@@ -21,6 +21,7 @@ def test_health_discloses_when_gemini_is_not_configured() -> None:
     assert payload["model"] == "gemini-3.5-flash"
     assert payload["googleAdk"] == "2.8.0"
     assert payload["geminiConfigured"] is False
+    assert payload["serpApiConfigured"] is False
     assert payload["liveMissionTotalLimit"] == 0
     assert payload["maxLlmCallsPerMission"] == 8
     assert payload["maxOutputTokensPerCall"] == 2_048
@@ -49,6 +50,8 @@ def test_poisoned_demo_is_quarantined_with_receipt() -> None:
     assert payload["verdict"]["engine"] == "deterministic_demo"
     assert len(payload["verdict"]["receipt_sha256"]) == 64
     assert payload["verdict"]["evidence_sha256"] == [sha256_json(POISONED_AGENT_CARD)]
+    assert payload["verdict"]["evidence_provenance"][0]["evidence_id"] == "agent-card"
+    assert payload["verdict"]["evidence_provenance"][0]["sha256"] == sha256_json(POISONED_AGENT_CARD)
     assert payload["verdict"]["evidence_set_sha256"] == sha256_json(payload["verdict"]["evidence_sha256"])
     assert any(event["status"] == "blocked" for event in payload["events"])
 
