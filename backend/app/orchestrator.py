@@ -9,7 +9,15 @@ from google.adk.runners import InMemoryRunner
 from google.genai import types
 
 from .agents import MAX_LLM_CALLS_PER_MISSION, MODEL_ID, build_root_agent
-from .models import MissionEvent, MissionRequest, MissionVerdict, ModelVerdict
+from .models import (
+    GuardFinding,
+    IdentityFinding,
+    MissionEvent,
+    MissionRequest,
+    MissionVerdict,
+    ModelVerdict,
+    ScoutFinding,
+)
 from .safety import sha256_json
 from .tools import (
     bind_agent_card_snapshot,
@@ -189,6 +197,9 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
     guard_report = _state_dict(state.get("guard_report"))
     if not all((scout_report, identity_report, guard_report)):
         raise RuntimeError("Google ADK completed without all three typed specialist findings")
+    ScoutFinding.model_validate(scout_report)
+    IdentityFinding.model_validate(identity_report)
+    GuardFinding.model_validate(guard_report)
     await emit(
         MissionEvent(
             sequence=3,
