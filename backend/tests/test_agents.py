@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from app.agents import (
     FIXED_LLM_CALLS_PER_MISSION,
     MAX_LLM_CALLS_PER_MISSION,
@@ -6,7 +9,7 @@ from app.agents import (
     build_judge_agent,
     build_specialist_agents,
 )
-from app.models import MissionVerdict
+from app.models import MissionVerdict, ModelVerdict
 from app.orchestrator import enforce_runtime_policy, live_run_config, seal_verdict, single_agent_run_config
 
 
@@ -32,6 +35,36 @@ def test_adk_fanout_has_three_specialists_and_one_final_judge() -> None:
     assert all(agent.generate_content_config.thinking_config.include_thoughts is False for agent in agents)
     assert live_run_config().max_llm_calls == 8
     assert single_agent_run_config().max_llm_calls == 1
+
+
+def test_model_verdict_normalizes_single_string_list_fields() -> None:
+    verdict = ModelVerdict.model_validate(
+        {
+            "action": "quarantine",
+            "confidence": 0.98,
+            "executive_summary": "Blocked by the fail-closed onboarding policy.",
+            "rationale": "Prompt injection and secret exfiltration were detected.",
+            "required_controls": "Human review before any sandbox access.",
+            "evidence_ids": "guard-scan",
+        }
+    )
+    assert verdict.rationale == ["Prompt injection and secret exfiltration were detected."]
+    assert verdict.required_controls == ["Human review before any sandbox access."]
+    assert verdict.evidence_ids == ["guard-scan"]
+
+
+def test_model_verdict_rejects_unknown_scalar_evidence_id() -> None:
+    with pytest.raises(ValidationError, match="evidence_ids"):
+        ModelVerdict.model_validate(
+            {
+                "action": "quarantine",
+                "confidence": 0.98,
+                "executive_summary": "Blocked by the fail-closed onboarding policy.",
+                "rationale": "Prompt injection was detected.",
+                "required_controls": [],
+                "evidence_ids": "invented-evidence",
+            }
+        )
 
 
 def test_runtime_policy_overrides_model_allow_when_guard_has_injection() -> None:

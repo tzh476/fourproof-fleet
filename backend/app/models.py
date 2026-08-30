@@ -100,6 +100,15 @@ class ModelVerdict(BaseModel):
         min_length=1, max_length=3
     )
 
+    @field_validator("rationale", "required_controls", "evidence_ids", mode="before")
+    @classmethod
+    def normalize_single_model_string(cls, value: Any) -> Any:
+        """Accept Gemini's occasional scalar form without weakening item validation."""
+        if isinstance(value, str):
+            stripped = value.strip()
+            return [stripped] if stripped else []
+        return value
+
 
 class MissionVerdict(BaseModel):
     action: Literal["allow_sandbox", "human_review", "quarantine"]
