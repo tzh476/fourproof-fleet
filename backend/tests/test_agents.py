@@ -15,6 +15,11 @@ def test_adk_workflow_graph_has_parallel_specialists_and_final_judge() -> None:
     assert all(agent.model == MODEL_ID for agent in specialists)
     assert all(not agent.tools for agent in specialists)
     assert all("evidence packet" in agent.instruction for agent in specialists)
+    assert {agent.output_schema.__name__ for agent in specialists} == {
+        "ScoutFinding",
+        "IdentityFinding",
+        "GuardFinding",
+    }
     judge_predecessors = {edge.from_node.name for edge in root.graph.edges if edge.to_node.name == "policy_judge"}
     assert judge_predecessors == {"registry_scout", "identity_verifier", "tool_guard"}
     judge = agents["policy_judge"]
@@ -24,6 +29,8 @@ def test_adk_workflow_graph_has_parallel_specialists_and_final_judge() -> None:
     assert MAX_LLM_CALLS_PER_MISSION == 8
     assert MAX_OUTPUT_TOKENS_PER_CALL == 2_048
     assert all(agent.generate_content_config.max_output_tokens == 2_048 for agent in agents.values())
+    assert all(agent.generate_content_config.thinking_config.thinking_budget == 0 for agent in agents.values())
+    assert all(agent.generate_content_config.thinking_config.include_thoughts is False for agent in agents.values())
     assert live_run_config().max_llm_calls == 8
 
 

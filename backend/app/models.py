@@ -69,6 +69,25 @@ class GuardReport(BaseModel):
     evidence: list[EvidenceItem] = Field(min_length=1, max_length=2)
 
 
+class ScoutFinding(BaseModel):
+    subject_name: str = Field(max_length=80)
+    capability_count: int = Field(ge=0, le=12)
+    endpoint_count: int = Field(ge=0, le=4)
+    evidence_id: Literal["scout-card"] = "scout-card"
+
+
+class IdentityFinding(BaseModel):
+    identity_state: Literal["verified", "declared", "missing", "contradicted"]
+    contradictions: list[str] = Field(max_length=2)
+    evidence_id: Literal["identity-claim"] = "identity-claim"
+
+
+class GuardFinding(BaseModel):
+    injection_signals: list[str] = Field(max_length=8)
+    endpoint_state: Literal["reachable", "policy_passed", "blocked", "unreachable", "missing"]
+    evidence_id: Literal["guard-scan"] = "guard-scan"
+
+
 class ModelVerdict(BaseModel):
     """Compact model-owned fields; hashes and engine are runtime-owned."""
 
@@ -77,7 +96,9 @@ class ModelVerdict(BaseModel):
     executive_summary: str = Field(max_length=280)
     rationale: list[str] = Field(min_length=1, max_length=3)
     required_controls: list[str] = Field(max_length=5)
-    evidence_ids: list[str] = Field(min_length=1, max_length=3)
+    evidence_ids: list[Literal["scout-card", "identity-claim", "guard-scan"]] = Field(
+        min_length=1, max_length=3
+    )
 
 
 class MissionVerdict(BaseModel):

@@ -187,13 +187,15 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
     scout_report = _state_dict(state.get("scout_report"))
     identity_report = _state_dict(state.get("identity_report"))
     guard_report = _state_dict(state.get("guard_report"))
+    if not all((scout_report, identity_report, guard_report)):
+        raise RuntimeError("Google ADK completed without all three typed specialist findings")
     await emit(
         MissionEvent(
             sequence=3,
             stage="scout",
             status="completed",
             title="Registry Scout",
-            detail=f"Bound one immutable card snapshot for {scout_report.get('subject_name', 'the external agent')}.",
+            detail=f"Bound one immutable card snapshot for {scout_input.get('subject_name', 'the external agent')}.",
         )
     )
     await emit(
@@ -202,11 +204,11 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
             stage="identity",
             status="completed",
             title="Identity Verifier",
-            detail=f"Identity state: {identity_report.get('identity_state', 'missing')}.",
+            detail=f"Identity state: {identity_input.get('identity_state', 'missing')}.",
         )
     )
-    injection_signals = guard_report.get("injection_signals") or []
-    endpoint_state = guard_report.get("endpoint_state", "missing")
+    injection_signals = guard_input.get("injection_signals") or []
+    endpoint_state = guard_input.get("endpoint_state", "missing")
     guard_status = "blocked" if injection_signals or endpoint_state == "blocked" else "completed"
     await emit(
         MissionEvent(
@@ -220,7 +222,7 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
     parsed: dict[str, Any] = json.loads(final_text)
     model_verdict = ModelVerdict.model_validate(parsed)
     verdict = MissionVerdict.model_validate({**model_verdict.model_dump(), "engine": "gemini_adk"})
-    verdict = enforce_runtime_policy(verdict, identity_report, guard_report)
+    verdict = enforce_runtime_policy(verdict, identity_input, guard_input)
     verdict = seal_verdict(verdict, [snapshot["sha256"]])
     await emit(MissionEvent(sequence=9, stage="judge", status="completed", title="Policy Judge", detail=f"Gemini ADK decision: {verdict.action}."))
     return verdict
