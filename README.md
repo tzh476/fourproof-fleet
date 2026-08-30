@@ -24,7 +24,8 @@ The product is built for the **Fortified Enterprise Fleet** category of the All 
 When `SERPAPI_API_KEY` is configured, the Registry Scout also queries the
 SerpApi Google Search API for a bounded set of public pages about the target
 host. Only three sanitized organic results enter the evidence packet; the API
-credential never enters logs, mission records, model prompts, or receipts. The
+credential is confined to SerpApi's required HTTPS request parameter and never
+enters application logs, mission records, model prompts, or receipts. The
 sanitized search packet receives its own SHA-256 hash and is sealed alongside
 the exact AgentCard snapshot. A configured SerpApi failure stops the mission
 instead of silently degrading to unverified evidence.

@@ -39,8 +39,10 @@ async def search_public_evidence(
 ) -> dict[str, Any] | None:
     """Fetch a bounded, sanitized SerpApi evidence packet for the target host.
 
-    The API credential is used only in the upstream request. It is never included
-    in the returned packet, logs, mission events, hashes, or public error text.
+    SerpApi's Search API requires the credential as a URL parameter. The
+    credential is therefore confined to that HTTPS request and is never copied
+    into the returned packet, application logs, mission events, hashes, or
+    public error text.
     """
     api_key = os.getenv("SERPAPI_API_KEY", "").strip()
     if not api_key:
