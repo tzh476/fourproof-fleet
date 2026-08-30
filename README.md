@@ -112,7 +112,7 @@ After a mission reaches a terminal state, `POST /api/missions/{mission_id}/reche
 
 ## Deploy to Google Cloud
 
-The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it. The script refuses an uncommitted worktree, disabled billing, invalid resource names, or a missing action-time authorization acknowledgement.
+The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it. The script refuses an uncommitted worktree, disabled billing, invalid resource names, or a missing action-time authorization acknowledgement. `.gcloudignore` is an explicit allowlist containing only the Dockerfile, package/build metadata, frontend source, public AgentCards, architecture SVG, and backend runtime source; tests, local environments, proof scripts, unrelated Cloudflare functions, and submission documents are not uploaded to Cloud Build.
 
 ```bash
 export FOURPROOF_PROJECT_ID="your-billing-enabled-project"
