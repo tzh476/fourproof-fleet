@@ -19,6 +19,7 @@ interface HealthRecord {
   store: string;
   queue: string;
   runtime: string;
+  gitSha: string;
 }
 
 interface MissionEvent {
@@ -37,6 +38,8 @@ interface MissionVerdict {
   rationale: string[];
   required_controls: string[];
   evidence_ids: string[];
+  evidence_sha256: string[];
+  evidence_set_sha256: string;
   receipt_sha256: string;
   engine: "gemini_adk" | "deterministic_demo";
 }
@@ -365,6 +368,9 @@ function MissionLab() {
           Three independent reviewers inspect discovery, identity, and tool safety in parallel. A final policy judge can
           quarantine the agent, request human review, or allow only an isolated sandbox.
         </p>
+        <p className="runtime-disclosure">
+          Built for the AI fleet librarian: an operations coordinator who needs security-grade evidence without becoming a security engineer.
+        </p>
         <div className="demo-selector" role="group" aria-label="Choose a reproducible inspection target">
           <button className={demoCase === "poisoned" ? "active" : ""} onClick={() => setDemoCase("poisoned")}>Poisoned card</button>
           <button className={demoCase === "safe" ? "active" : ""} onClick={() => setDemoCase("safe")}>Incomplete safe card</button>
@@ -383,6 +389,7 @@ function MissionLab() {
             <div><dt>store</dt><dd>{health.store}</dd></div>
             <div><dt>queue</dt><dd>{health.queue}</dd></div>
             <div><dt>gemini</dt><dd>{health.geminiConfigured ? "configured" : "not configured"}</dd></div>
+            <div><dt>commit</dt><dd>{health.gitSha.slice(0, 12)}</dd></div>
           </dl>
         )}
       </div>
@@ -416,7 +423,7 @@ function MissionLab() {
             <b>{Math.round(mission.verdict.confidence * 100)}%</b>
             <p>{mission.verdict.executive_summary}</p>
             <small>
-              Receipt {mission.verdict.receipt_sha256.slice(0, 20)}… · {mission.verdict.engine}
+              Evidence {mission.verdict.evidence_set_sha256.slice(0, 12)}… · receipt {mission.verdict.receipt_sha256.slice(0, 12)}… · {mission.verdict.engine}
               {mission.next_review_at ? ` · review ${new Date(mission.next_review_at).toLocaleDateString()}` : ""}
             </small>
           </div>

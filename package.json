@@ -10,9 +10,10 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false",
-    "test:backend": "PYTHONPATH=backend .venv/bin/pytest -q backend/tests",
+    "test:backend": "PYTHONPATH=backend:. .venv/bin/pytest -q backend/tests",
     "check": "npm run test && npm run test:backend && npm run build",
-    "deploy:gcp": "npm run check && bash scripts/deploy-gcp.sh"
+    "deploy:gcp": "npm run check && bash scripts/deploy-gcp.sh",
+    "proof:gcp": "PYTHONPATH=. python3 scripts/live_proof.py"
   },
   "dependencies": {
     "react": "19.2.8",

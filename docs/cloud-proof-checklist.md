@@ -6,12 +6,15 @@ Do not claim Google Cloud execution until every applicable item has direct evide
 
 - [ ] The applicant selected and authenticated the intended `gcloud` account.
 - [ ] The applicant confirmed the project, billing status, contest eligibility, and resource cost.
+- [ ] No contest credits are assumed; the applicant supplied a self-funded hard authorization ceiling.
+- [ ] Public Cloud Run access has a separate applicant authorization; otherwise the deployment remains private.
 - [ ] `FOURPROOF_PROJECT_ID`, region, service name, and runtime service account were reviewed.
 - [ ] No key, ADC file, cookie, or token is in Git history.
 
 ## Runtime proof
 
 - [ ] Cloud Run revision is built from the final Git commit.
+- [ ] `/healthz` `gitSha` exactly matches the public repository's final commit.
 - [ ] `/healthz` reports `runtime=google-cloud-run`, `store=firestore`, `queue=pubsub`, `geminiConfigured=true`.
 - [ ] The model shown by `/healthz` is exactly `gemini-3.5-flash` and the framework is Google ADK.
 - [ ] A non-fixture mission finishes with `engine=gemini_adk`; deterministic output does not count.
@@ -19,6 +22,7 @@ Do not claim Google Cloud execution until every applicable item has direct evide
 - [ ] Pub/Sub delivery uses authenticated OIDC and the configured audience/service-account binding.
 - [ ] The completed mission survives a new Cloud Run instance or restart.
 - [ ] Cloud Logging shows the same mission id without exposed input secrets.
+- [ ] `scripts/live_proof.py` exits successfully and its sanitized JSON is reviewed against the console before publication.
 
 ## Counterexamples
 
@@ -37,7 +41,9 @@ Do not claim Google Cloud execution until every applicable item has direct evide
 ## Submission capture
 
 - [ ] The public demo URL and public repository URL are final.
+- [ ] The English or English-subtitled video is no longer than four minutes and is publicly visible on YouTube or Vimeo.
 - [ ] The video shows the real Cloud Run hostname, `/healthz`, one real Gemini mission, Firestore events, and the sealed receipt in one continuous narrative.
+- [ ] The video distinguishes the stable evidence-set hash from the run-specific decision receipt.
 - [ ] The architecture image is uploaded and legible.
 - [ ] All reuse, AI-assistance, eligibility, privacy, and rules declarations were reviewed and accepted by the applicant personally.
 - [ ] Final Devpost submit is performed by the applicant and the confirmation receipt is saved.

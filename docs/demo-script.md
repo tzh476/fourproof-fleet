@@ -4,7 +4,7 @@ The final recording must use the real Cloud Run deployment and a real `gemini_ad
 
 ## 0:00-0:25 — Problem
 
-“Enterprise teams are about to hire thousands of third-party agents. Their AgentCards make discovery easy, but the cards are publisher-controlled input. One poisoned card can ask a reviewer to ignore policy, leak credentials, or call a private endpoint. FourProof Fleet puts a zero-trust review gate between discovery and enterprise tools.”
+“Enterprise teams are about to hire thousands of third-party agents. The unlikely hero managing that catalog is the AI fleet librarian—often an operations coordinator, not a security engineer. AgentCards make discovery easy, but the cards are publisher-controlled input. One poisoned card can ask a reviewer to ignore policy, leak credentials, or call a private endpoint. FourProof Fleet gives that librarian a zero-trust review gate between discovery and enterprise tools.”
 
 Show the hero and the three policy outcomes.
 
@@ -36,7 +36,7 @@ Select **Live safe**. It submits `[CLOUD_RUN_URL]/agentcards/safe.json` without 
 
 Show the Cloud Run revision, Pub/Sub authenticated push configuration, and Firestore mission sequence. Do not expose account, token, project-secret, or billing details.
 
-Trigger one linked recheck for the safe mission and show `previous_mission_id`, `next_review_at`, and the unchanged receipt when the underlying evidence bytes are unchanged.
+Trigger one linked recheck for the safe mission and show `previous_mission_id`, `next_review_at`, and the unchanged evidence-set hash when the underlying AgentCard bytes are unchanged. The decision receipt is run-specific and may change when Gemini's typed explanation changes; do not claim deterministic model wording.
 
 ## 3:15-3:35 — Close
 

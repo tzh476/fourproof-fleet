@@ -2,7 +2,7 @@
 
 > Hire the agent. Not the risk.
 
-FourProof Fleet is a zero-trust onboarding system for third-party AI agents. A procurement or compliance operator submits an AgentCard; three independent reviewers inspect discovery claims, identity evidence, and tool-safety boundaries in parallel. A final policy judge quarantines the agent, requests human review, or permits only an isolated sandbox. Every decision is sealed to a SHA-256 evidence receipt.
+FourProof Fleet is a zero-trust onboarding system for third-party AI agents. Its unlikely hero is the **AI fleet librarian**—often an operations coordinator, not a security engineer—who submits an AgentCard while three independent reviewers inspect discovery claims, identity evidence, and tool-safety boundaries in parallel. A final policy judge quarantines the agent, requests human review, or permits only an isolated sandbox. Every decision is sealed to a SHA-256 evidence receipt.
 
 ![FourProof Fleet architecture](docs/architecture.svg)
 
@@ -18,8 +18,8 @@ The product is built for the **Fortified Enterprise Fleet** category of the All 
 2. **Identity Verifier** separates declared owner/registry metadata from independently verified facts.
 3. **Tool Guard** detects instruction override, secret-exfiltration language, tool coercion, role impersonation, credential-bearing URLs, localhost, and private-network targets.
 4. **Policy Judge** combines the independent reports under a fail-closed policy.
-5. **Receipt Sealer** produces a canonical SHA-256 decision receipt and durable event stream.
-6. **Lifecycle Recheck** links a later review to the previous mission while preserving the review cadence, evidence hash, and receipt history across sessions.
+5. **Receipt Sealer** produces a stable evidence-set hash, a run-specific canonical SHA-256 decision receipt, and a durable event stream.
+6. **Lifecycle Recheck** links a later review to the previous mission while preserving the review cadence, stable evidence comparison, and receipt history across sessions.
 
 The Google ADK workflow graph is a real fan-out/fan-in topology:
 
@@ -108,13 +108,45 @@ curl -sS -X POST http://127.0.0.1:8876/api/missions \
 
 Poll `GET /api/missions/{mission_id}`. The poisoned fixture must finish with `quarantine`, four independent injection signals, a blocked loopback endpoint, and a 64-character receipt hash.
 
-After a mission reaches a terminal state, `POST /api/missions/{mission_id}/recheck` queues a linked review. An unchanged deterministic fixture produces the same receipt; a changed live AgentCard produces a new evidence hash and receipt.
+After a mission reaches a terminal state, `POST /api/missions/{mission_id}/recheck` queues a linked review. Unchanged AgentCard bytes produce the same `evidence_set_sha256`; the run-specific decision receipt can still change when Gemini's typed explanation changes. A changed live AgentCard produces a new evidence-set hash.
 
 ## Deploy to Google Cloud
 
-The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it.
+The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it. The script refuses an uncommitted worktree, disabled billing, invalid resource names, or a missing action-time authorization acknowledgement.
+
+```bash
+export FOURPROOF_PROJECT_ID="your-billing-enabled-project"
+export FOURPROOF_REGION="us-central1"
+export FOURPROOF_SERVICE_NAME="fourproof-fleet"
+export FOURPROOF_RUNTIME_SA="fourproof-fleet-runtime"
+export FOURPROOF_HARD_COST_CAP_USD="your-approved-maximum"
+export FOURPROOF_BILLABLE_ACTION_ACK="I_CONFIRM_USER_AUTHORIZED_BILLABLE_GCP_CHANGES"
+npm run deploy:gcp
+```
+
+`FOURPROOF_HARD_COST_CAP_USD` records the applicant's authorization ceiling; Google Cloud billing does not provide a guaranteed automatic hard stop at that value. The script also bounds Cloud Run to one instance and the app to eight mission starts per instance-hour. Do not set the acknowledgement unless the project owner has confirmed the exact project and cost boundary for that deployment attempt. The deployment stays private by default. Only after separate action-time authorization to publish the hosted demo, set:
+
+```bash
+export FOURPROOF_PUBLIC_DEMO_ACK="I_CONFIRM_USER_AUTHORIZED_PUBLIC_CLOUD_RUN_DEMO"
+```
+
+Without that second acknowledgement, the script configures the private service and grants only its runtime identity permission to receive Pub/Sub push requests.
 
 The script configures Cloud Run, Firestore, Pub/Sub with OIDC push authentication, Vertex AI access, service identity, max instances, and scale-to-zero. After deployment, verify every item in [docs/cloud-proof-checklist.md](docs/cloud-proof-checklist.md) and record the Cloud Run console plus live mission in the demo video.
+
+After an authorized deployment, [scripts/live_proof.py](scripts/live_proof.py) executes a poisoned mission, a safe counterexample, and a linked safe recheck. It fails unless the observed service is a ready `.run.app` revision built from the expected Git SHA with Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, exact OIDC configuration, durable Firestore documents, correlated Cloud Logging entries, and a rejected forged push. It never enables an API or changes a cloud resource.
+
+```bash
+export FOURPROOF_LIVE_PROOF_ACK="I_CONFIRM_USER_AUTHORIZED_GCP_AND_GEMINI_USAGE"
+python3 scripts/live_proof.py \
+  --base-url="https://YOUR_SERVICE_URL" \
+  --project-id="${FOURPROOF_PROJECT_ID}" \
+  --region="${FOURPROOF_REGION}" \
+  --service-name="${FOURPROOF_SERVICE_NAME}" \
+  --runtime-service-account="${FOURPROOF_RUNTIME_SA}@${FOURPROOF_PROJECT_ID}.iam.gserviceaccount.com" \
+  --expected-git-sha="$(git rev-parse HEAD)" \
+  --output="docs/live-gcp-proof.json"
+```
 
 ## Submission assets
 
@@ -124,13 +156,15 @@ The script configures Cloud Run, Firestore, Pub/Sub with OIDC push authenticatio
 - [architecture source](docs/architecture.svg) and [1600×900 PNG](docs/architecture.png)
 - [1600×900 cover image](docs/cover.png)
 - [threat model](docs/threat-model.md) and [live cloud proof checklist](docs/cloud-proof-checklist.md)
+- [continuous recording runbook](docs/recording-runbook.md)
+- [official rules evidence and applicant-owned gates](docs/official-gates.md)
 
 ## Verification status
 
 Verified locally on 2026-08-30:
 
 - 13 frontend/domain tests passed;
-- 32 Python API/security/ADK graph/queue tests passed;
+- 37 Python API/security/ADK graph/queue/live-proof tests passed;
 - TypeScript production build passed;
 - Python dependency consistency passed;
 - browser QA loaded the live BSC registry and handled its changing category result counts without treating discovery as endorsement;

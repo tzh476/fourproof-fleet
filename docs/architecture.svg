@@ -38,13 +38,13 @@
 
   <text x="72" y="72" class="eyebrow">FOURPROOF FLEET</text>
   <text x="72" y="132" class="title">Zero-trust agent onboarding</text>
-  <text x="72" y="174" class="subtitle">Untrusted AgentCard → parallel evidence → bounded policy → reproducible receipt</text>
+  <text x="72" y="174" class="subtitle">Untrusted AgentCard → parallel evidence → bounded policy → stable evidence seal + run receipt</text>
 
   <g filter="url(#shadow)">
     <rect x="70" y="286" width="220" height="130" rx="22" class="box"/>
     <circle cx="118" cy="337" r="22" fill="#1c4b35" stroke="#58eea6" stroke-width="2"/>
     <path d="M107 337h22M118 326v22" stroke="#70ffb5" stroke-width="3" stroke-linecap="round"/>
-    <text x="154" y="332" class="label">Operator</text>
+    <text x="154" y="332" class="label">Fleet librarian</text>
     <text x="154" y="359" class="small">AgentCard URL</text>
     <text x="94" y="392" class="micro">UNTRUSTED INPUT</text>
   </g>

@@ -77,6 +77,7 @@ class MissionVerdict(BaseModel):
     required_controls: list[str]
     evidence_ids: list[str]
     evidence_sha256: list[str] = Field(default_factory=list)
+    evidence_set_sha256: str = ""
     receipt_sha256: str = ""
     engine: Literal["gemini_adk", "deterministic_demo"] = "gemini_adk"
 

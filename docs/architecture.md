@@ -38,7 +38,7 @@ queued -> running -> completed
 - Pub/Sub carries only the mission identifier; the worker reloads canonical input from Firestore.
 - An atomic Firestore lease permits only one active delivery; an expired lease can be reclaimed after a worker crash.
 - A terminal mission is idempotent: a duplicate delivery returns success without executing it twice.
-- Every stage appends a timestamped event. The terminal record includes specialist reports, policy verdict, engine, model, and receipt hash.
+- Every stage appends a timestamped event. The terminal record includes specialist reports, policy verdict, engine, model, a stable evidence-set hash, and a run-specific receipt hash.
 - The same mission id correlates secret-free JSON stage logs in Cloud Logging with ADK's OpenTelemetry-instrumented execution.
 - A terminal record stores `next_review_at`; a recheck creates a new mission linked by `previous_mission_id`, preserving cross-session lifecycle context.
 - Any uncaught stage error is stored as `failed`; it is never converted into an activation decision.

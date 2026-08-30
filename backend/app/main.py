@@ -145,6 +145,7 @@ async def healthz() -> dict[str, object]:
         "queue": "pubsub" if pubsub_topic() else "in-process",
         "runtime": "google-cloud-run" if os.getenv("K_SERVICE") else "local",
         "observability": "adk-opentelemetry+structured-cloud-logging",
+        "gitSha": os.getenv("APP_GIT_SHA", "uncommitted-local"),
         "missionLimitPerHourPerInstance": max(1, int(os.getenv("MISSION_LIMIT_PER_HOUR", "60"))),
         "liveTargetPolicy": "allowlist" if os.getenv("ALLOWED_LIVE_HOSTS", "").strip() else "any-public-host",
     }

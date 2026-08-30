@@ -24,7 +24,14 @@ EventSink = Callable[[MissionEvent], Awaitable[None]]
 
 def seal_verdict(verdict: MissionVerdict, evidence_sha256: list[str]) -> MissionVerdict:
     normalized_hashes = sorted({value for value in evidence_sha256 if len(value) == 64})
-    bound_verdict = verdict.model_copy(update={"evidence_sha256": normalized_hashes, "receipt_sha256": ""})
+    evidence_set_sha256 = sha256_json(normalized_hashes)
+    bound_verdict = verdict.model_copy(
+        update={
+            "evidence_sha256": normalized_hashes,
+            "evidence_set_sha256": evidence_set_sha256,
+            "receipt_sha256": "",
+        }
+    )
     payload = bound_verdict.model_dump(exclude={"receipt_sha256"})
     return bound_verdict.model_copy(update={"receipt_sha256": sha256_json(payload)})
 

@@ -16,11 +16,11 @@ Fortified Enterprise Fleet
 
 ## One-line pitch
 
-FourProof Fleet is a Google ADK and Gemini 3.5 zero-trust gate that reviews third-party AgentCards in parallel, quarantines unsafe agents, and seals every decision to a reproducible evidence receipt.
+FourProof Fleet is a Google ADK and Gemini 3.5 zero-trust gate that reviews third-party AgentCards in parallel, quarantines unsafe agents, and seals exact evidence plus every decision into separate tamper-evident hashes.
 
 ## Inspiration
 
-Agent registries are becoming app stores for autonomous software. They make agents discoverable, but discovery metadata is still supplied by the publisher. Enterprises need a boundary between “this agent exists” and “this agent may touch our tools, data, or credentials.” FourProof Fleet turns onboarding into an evidence-producing workflow instead of a trust-by-description decision.
+Agent registries are becoming app stores for autonomous software. They make agents discoverable, but discovery metadata is still supplied by the publisher. Our unlikely hero is the AI fleet librarian: an operations coordinator asked to catalog autonomous software without having to become a security engineer. FourProof Fleet gives that person a boundary between “this agent exists” and “this agent may touch our tools, data, or credentials,” turning onboarding into an evidence-producing workflow instead of a trust-by-description decision.
 
 ## What it does
 
@@ -30,7 +30,7 @@ An operator submits an AgentCard URL. Three independent specialists run in paral
 - Identity Verifier separates declared owner and registry fields from independently verified facts.
 - Tool Guard detects prompt injection, secret exfiltration, tool coercion, role impersonation, credential-bearing URLs, and private-network targets.
 
-A Policy Judge combines the typed reports and returns only one of three bounded outcomes: isolated sandbox, human review, or quarantine. A receipt sealer canonicalizes the evidence and produces a SHA-256 decision receipt. The UI exposes the full mission timeline, engine, model, reasons, receipt, and next lifecycle review date. A linked recheck preserves the previous mission id, allowing an enterprise to compare evidence across long-running review cycles.
+A Policy Judge combines the typed reports and returns only one of three bounded outcomes: isolated sandbox, human review, or quarantine. A receipt sealer produces a stable evidence-set hash plus a run-specific SHA-256 decision receipt. The UI exposes the full mission timeline, engine, model, reasons, both hashes, and next lifecycle review date. A linked recheck preserves the previous mission id, allowing an enterprise to compare exact evidence across long-running review cycles without pretending Gemini wording is deterministic.
 
 ## How we built it
 
@@ -48,7 +48,7 @@ The hardest design problem was preventing the reviewer from becoming the attack 
 
 - A real Google ADK graph with three concurrent specialists and one fan-in judge.
 - Explainable fail-closed outcomes instead of a generic safety score.
-- Exact evidence and decision hashing for reproducible receipts.
+- Stable exact-evidence hashing plus run-specific decision receipts.
 - An authenticated Pub/Sub/Cloud Run boundary with durable Firestore events.
 - Explicit runtime disclosure: deterministic fixtures cannot masquerade as Gemini or Google Cloud execution.
 - Adversarial tests for prompt injection, SSRF, forged queue delivery, duplicate execution, and benign-but-unverified agents.
@@ -73,7 +73,7 @@ Gemini 3.5 Flash, Google Agent Development Kit, Cloud Run, Firestore, Pub/Sub, C
 
 - Demo: `[TBD_CLOUD_RUN_URL]`
 - Repository: `[TBD_PUBLIC_REPOSITORY_URL]`
-- Video: `[TBD_PUBLIC_VIDEO_URL]`
+- Video: `[TBD_PUBLIC_YOUTUBE_OR_VIMEO_URL]`
 - Architecture: `docs/architecture.svg`
 
 ## Reproducibility

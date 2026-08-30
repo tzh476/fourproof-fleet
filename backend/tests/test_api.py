@@ -37,6 +37,7 @@ def test_poisoned_demo_is_quarantined_with_receipt() -> None:
     assert payload["verdict"]["engine"] == "deterministic_demo"
     assert len(payload["verdict"]["receipt_sha256"]) == 64
     assert payload["verdict"]["evidence_sha256"] == [sha256_json(POISONED_AGENT_CARD)]
+    assert payload["verdict"]["evidence_set_sha256"] == sha256_json(payload["verdict"]["evidence_sha256"])
     assert any(event["status"] == "blocked" for event in payload["events"])
 
 
@@ -86,6 +87,7 @@ def test_terminal_mission_can_create_linked_reproducible_review() -> None:
     second = client.get(f"/api/missions/{recheck_response.json()['mission_id']}").json()
     assert second["previous_mission_id"] == first["mission_id"]
     assert second["status"] == "completed"
+    assert second["verdict"]["evidence_set_sha256"] == first["verdict"]["evidence_set_sha256"]
     assert second["verdict"]["receipt_sha256"] == first["verdict"]["receipt_sha256"]
 
 

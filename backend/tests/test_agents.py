@@ -1,6 +1,6 @@
 from app.agents import MODEL_ID, build_root_agent
 from app.models import MissionVerdict
-from app.orchestrator import enforce_runtime_policy
+from app.orchestrator import enforce_runtime_policy, seal_verdict
 
 
 def test_adk_workflow_graph_has_parallel_specialists_and_final_judge() -> None:
@@ -54,3 +54,20 @@ def test_runtime_policy_removes_sandbox_when_identity_is_only_declared() -> None
         {"injection_signals": [], "endpoint_state": "reachable"},
     )
     assert enforced.action == "human_review"
+
+
+def test_evidence_set_is_stable_while_run_specific_receipt_can_change() -> None:
+    first = MissionVerdict(
+        action="human_review",
+        confidence=0.91,
+        executive_summary="First typed explanation.",
+        rationale=["Identity remains declared."],
+        required_controls=["human approval"],
+        evidence_ids=["identity-claim"],
+    )
+    second = first.model_copy(update={"executive_summary": "A different valid typed explanation."})
+    first_sealed = seal_verdict(first, ["a" * 64])
+    second_sealed = seal_verdict(second, ["a" * 64])
+
+    assert first_sealed.evidence_set_sha256 == second_sealed.evidence_set_sha256
+    assert first_sealed.receipt_sha256 != second_sealed.receipt_sha256
