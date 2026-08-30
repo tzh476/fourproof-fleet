@@ -1,0 +1,6 @@
+fastapi==0.141.1
+google-adk==2.8.0
+google-cloud-firestore==2.29.0
+google-cloud-pubsub==2.35.0
+httpx==0.28.1
+uvicorn[standard]==0.46.0

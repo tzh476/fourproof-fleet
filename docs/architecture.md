@@ -1,60 +1,77 @@
 # Architecture and evidence flow
 
+![FourProof Fleet architecture](architecture.svg)
+
+FourProof Fleet is a fail-closed review pipeline. Untrusted AgentCard content enters through one bounded fetcher; it never becomes a system prompt and it never receives credentials or production tools.
+
 ```mermaid
 flowchart LR
-    U[User] --> UI[FourProof web UI]
-    UI --> S[Four category searches]
-    S --> API[8004scan public API]
-    API --> V[Zod boundary validation]
-    V --> R[Evidence ranking]
-    R --> C[Category cards]
-    C --> I[Receipt inspector]
-    I --> RPC[BSC public RPC]
-    RPC --> REG[Canonical ERC-8004 registry]
-    I --> G{Evidence gates}
-    G -->|pass| P[Read-only activation plan]
-    G -->|fail| B[Blocked with exact reasons]
-    UI --> A2A[Four first-party deterministic A2A references]
-    A2A --> D[Plan or explicit rejection]
+    O[Procurement operator] -->|AgentCard URL| R[Cloud Run API]
+    R --> F[(Firestore mission + events)]
+    R -->|mission id| Q[Pub/Sub]
+    Q -->|OIDC push| R
+    R --> W[Google ADK Workflow]
+    W --> A[Registry Scout]
+    W --> B[Identity Verifier]
+    W --> C[Tool Guard]
+    A --> J[Policy Judge]
+    B --> J
+    C --> J
+    A -. bounded fetch .-> X[External AgentCard]
+    A --> G[Gemini 3.5 Flash]
+    B --> G
+    C --> G
+    J --> G
+    J --> S[SHA-256 Receipt Sealer]
+    S --> F
+    F --> U[Mission timeline + verdict UI]
 ```
 
-## Observed facts versus claims
+## State machine
 
-| Field | Treatment |
-| --- | --- |
-| Agent name and description | Publisher claim; used only for category relevance |
-| Chain ID, registry address, token ID | Indexed fact, then directly verifiable on BSC |
-| `ownerOf(tokenId)` and `tokenURI(tokenId)` | Direct live chain read |
-| A2A/MCP discovery URL | Published metadata; not evidence that the execution target works |
-| Discovery health | Scanner observation that an AgentCard or MCP document is readable |
-| Domain verification | Scanner observation; required but not equivalent to an execution check |
-| Execution target | Must be resolved from discovery metadata and pass a bounded public-call check |
-| Wallet address | Published metadata; not proof of balance or authorization |
-| Returns, win rate, safety, and output quality | Never inferred; require separate task evidence |
+```text
+queued -> running -> completed
+                  \-> failed
+```
 
-## Ranking rationale
+- Intake writes the complete queued mission before publishing it.
+- Pub/Sub carries only the mission identifier; the worker reloads canonical input from Firestore.
+- An atomic Firestore lease permits only one active delivery; an expired lease can be reclaimed after a worker crash.
+- A terminal mission is idempotent: a duplicate delivery returns success without executing it twice.
+- Every stage appends a timestamped event. The terminal record includes specialist reports, policy verdict, engine, model, and receipt hash.
+- The same mission id correlates secret-free JSON stage logs in Cloud Logging with ADK's OpenTelemetry-instrumented execution.
+- A terminal record stores `next_review_at`; a recheck creates a new mission linked by `previous_mission_id`, preserving cross-session lifecycle context.
+- Any uncaught stage error is stored as `failed`; it is never converted into an activation decision.
 
-Category relevance is deliberately separate from evidence quality. A highly relevant description can make an agent eligible for a category list, but it cannot produce an operational tier without registry, protocol, discovery-domain, execution-target, and wallet evidence.
+## Fan-out / fan-in graph
 
-The score is explainable and capped at 100:
+Google ADK 2.8 `Workflow` owns the graph:
 
-- category relevance: up to 30;
-- canonical BSC registry: 20;
-- A2A or MCP protocol: 10;
-- discovery URL published: 5;
-- discovery health: up to 15;
-- verified discovery domain: 5;
-- validated execution target: 10;
-- metadata completeness: up to 10;
-- agent wallet: 5;
-- feedback volume: up to 5.
+```text
+START
+  |-- registry_scout ------|
+  |-- identity_verifier ---|--> policy_judge
+  |-- tool_guard ----------|
+```
 
-The UI presents the underlying facts and blocking reasons, not only the aggregate number.
+The three specialists have independent typed outputs. The judge can only consume those validated structures. Its allowed decisions are:
 
-## Activation boundary
+- `allow_sandbox`: constrained test access only, never production activation;
+- `human_review`: evidence is incomplete or ambiguous;
+- `quarantine`: a blocking safety signal exists.
 
-The current MVP generates a local read-only intent only after every evidence gate passes, including a fresh direct BSC owner read. It does not send the intent or move funds. A readable AgentCard alone never passes the gate. A real contest activation path should use an injected user wallet and the official BNB Agent SDK/ ERC-8183 contracts, with the final contract address, token, amount, allowance, expiry, and transaction simulation visible before signature.
+## Failure and retry behavior
 
-## Reference-agent boundary
+- Queue publication failure changes the mission to `failed` and returns HTTP 503.
+- Pub/Sub retries non-2xx worker responses according to its subscription policy.
+- A configured push endpoint verifies Google OIDC issuer, audience, and exact service-account email.
+- Firestore makes mission state durable across Cloud Run restarts and instance replacement.
+- The deterministic fixtures are local demonstrations, not a cloud fallback. A non-fixture target without Gemini authentication returns HTTP 503.
 
-The four first-party A2A routes are deterministic calculators, not autonomous traders. Each accepts only bounded structured inputs, returns JSON data, and declares read-only/no-custody/no-trading controls. They make the four-category demo reproducible without converting an unregistered service into an onchain identity claim. Deployment and ERC-8004 registration are separate states.
+## Trust boundaries
+
+1. **Browser to Cloud Run:** validate JSON shape and a narrow URL contract.
+2. **Cloud Run to target:** resolve DNS, reject non-public addresses, disable redirects, cap bytes, require JSON.
+3. **Target content to Gemini:** expose content through tool responses, never instruction-template substitution; a non-model guard still enforces blocking policy.
+4. **Pub/Sub to worker:** require Google-issued OIDC with audience and service-account binding.
+5. **Decision to activation:** a receipt is an auditable recommendation, not permission to grant production credentials.

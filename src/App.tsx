@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import architectureUrl from "../docs/architecture.svg";
 import { buildActivationPlan, type ActivationPlan } from "./lib/activation";
 import { fetchMarketplace } from "./lib/api";
 import { categoryDefinitions } from "./lib/categories";
@@ -7,6 +8,50 @@ import { strongestService } from "./lib/scoring";
 import type { AgentCategory, CategoryResult, RankedAgent, RegistryProof } from "./lib/types";
 
 const categoryOrder = Object.keys(categoryDefinitions) as AgentCategory[];
+const apiBase = (import.meta.env.VITE_API_BASE ?? "").replace(/\/$/, "");
+
+type DemoCase = "safe" | "poisoned" | "live-safe" | "live-poisoned";
+
+interface HealthRecord {
+  model: string;
+  googleAdk: string;
+  geminiConfigured: boolean;
+  store: string;
+  queue: string;
+  runtime: string;
+}
+
+interface MissionEvent {
+  sequence: number;
+  stage: string;
+  status: "queued" | "running" | "completed" | "blocked" | "failed";
+  title: string;
+  detail: string;
+  at: string;
+}
+
+interface MissionVerdict {
+  action: "allow_sandbox" | "human_review" | "quarantine";
+  confidence: number;
+  executive_summary: string;
+  rationale: string[];
+  required_controls: string[];
+  evidence_ids: string[];
+  receipt_sha256: string;
+  engine: "gemini_adk" | "deterministic_demo";
+}
+
+interface MissionRecord {
+  mission_id: string;
+  status: "queued" | "running" | "completed" | "failed";
+  target_url: string;
+  events: MissionEvent[];
+  verdict: MissionVerdict | null;
+  error: string | null;
+  previous_mission_id: string | null;
+  next_review_at: string | null;
+  runtime: { model?: string; framework?: string; store?: string };
+}
 
 const tierLabels: Record<RankedAgent["evidenceTier"], string> = {
   operational: "Operational evidence",
@@ -252,6 +297,135 @@ function Inspector({ agent, onClose }: { agent: RankedAgent; onClose: () => void
   );
 }
 
+function MissionLab() {
+  const [demoCase, setDemoCase] = useState<DemoCase>("poisoned");
+  const [mission, setMission] = useState<MissionRecord | null>(null);
+  const [health, setHealth] = useState<HealthRecord | null>(null);
+  const [running, setRunning] = useState(false);
+  const [missionError, setMissionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetch(`${apiBase}/healthz`)
+      .then((response) => response.ok ? response.json() as Promise<HealthRecord> : Promise.reject(new Error("health unavailable")))
+      .then(setHealth)
+      .catch(() => setHealth(null));
+  }, []);
+
+  useEffect(() => {
+    if (!mission || !["queued", "running"].includes(mission.status)) return;
+    const timer = window.setInterval(async () => {
+      const response = await fetch(`${apiBase}/api/missions/${mission.mission_id}`);
+      if (!response.ok) return;
+      const next = await response.json() as MissionRecord;
+      setMission(next);
+      if (["completed", "failed"].includes(next.status)) setRunning(false);
+    }, 650);
+    return () => window.clearInterval(timer);
+  }, [mission?.mission_id, mission?.status]);
+
+  async function runMission() {
+    setMission(null);
+    setMissionError(null);
+    setRunning(true);
+    try {
+      const response = await fetch(`${apiBase}/api/missions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_url: demoCase.startsWith("live-")
+            ? `${window.location.origin}/agentcards/${demoCase.replace("live-", "")}.json`
+            : `https://demo.fourproof.invalid/${demoCase}`,
+          ...(demoCase.startsWith("live-") ? {} : { demo_case: demoCase }),
+          objective: "Decide whether this external agent may enter an isolated enterprise sandbox.",
+        }),
+      });
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({})) as { detail?: string };
+        throw new Error(detail.detail ?? `Mission API returned ${response.status}`);
+      }
+      setMission(await response.json() as MissionRecord);
+    } catch (error) {
+      setMissionError(error instanceof Error ? error.message : "Mission could not start");
+      setRunning(false);
+    }
+  }
+
+  const verdictClass = mission?.verdict?.action === "quarantine"
+    ? "verdict-quarantine"
+    : mission?.verdict?.action === "allow_sandbox"
+      ? "verdict-allow"
+      : "verdict-review";
+
+  return (
+    <section className="mission-section" id="mission">
+      <div className="mission-intro">
+        <p className="eyebrow">Live mission control</p>
+        <h2>Trust an agent only after the fleet tries to disprove it.</h2>
+        <p>
+          Three independent reviewers inspect discovery, identity, and tool safety in parallel. A final policy judge can
+          quarantine the agent, request human review, or allow only an isolated sandbox.
+        </p>
+        <div className="demo-selector" role="group" aria-label="Choose a reproducible inspection target">
+          <button className={demoCase === "poisoned" ? "active" : ""} onClick={() => setDemoCase("poisoned")}>Poisoned card</button>
+          <button className={demoCase === "safe" ? "active" : ""} onClick={() => setDemoCase("safe")}>Incomplete safe card</button>
+          <button className={demoCase === "live-poisoned" ? "active" : ""} onClick={() => setDemoCase("live-poisoned")}>Live poisoned</button>
+          <button className={demoCase === "live-safe" ? "active" : ""} onClick={() => setDemoCase("live-safe")}>Live safe</button>
+        </div>
+        <button className="primary-button mission-run" onClick={() => void runMission()} disabled={running}>
+          {running ? "Fleet reviewing…" : "Launch evidence mission"}<span>→</span>
+        </button>
+        <p className="runtime-disclosure">
+          Embedded cases are deterministic and labeled. “Live” cases fetch deployed public cards and require authenticated Gemini 3.5 Flash through Google ADK.
+        </p>
+        {health && (
+          <dl className="runtime-grid" aria-label="Observed backend configuration">
+            <div><dt>runtime</dt><dd>{health.runtime}</dd></div>
+            <div><dt>store</dt><dd>{health.store}</dd></div>
+            <div><dt>queue</dt><dd>{health.queue}</dd></div>
+            <div><dt>gemini</dt><dd>{health.geminiConfigured ? "configured" : "not configured"}</dd></div>
+          </dl>
+        )}
+      </div>
+
+      <div className="mission-console" aria-live="polite">
+        <div className="console-topline">
+          <span className="live-dot" />
+          <strong>{mission ? `Mission ${mission.mission_id.slice(0, 8)}` : "Awaiting mission"}</strong>
+          <small>{mission?.runtime.model ?? "no model invoked"}</small>
+        </div>
+        {!mission && !missionError && (
+          <div className="console-empty">
+            <span>4P</span>
+            <p>Select a target and launch the autonomous review.</p>
+          </div>
+        )}
+        {missionError && <p className="status-bad">{missionError}</p>}
+        {mission && (
+          <ol className="event-timeline">
+            {mission.events.map((event) => (
+              <li key={`${event.sequence}-${event.at}`} className={`event-${event.status}`}>
+                <span>{String(event.sequence).padStart(2, "0")}</span>
+                <div><strong>{event.title}</strong><p>{event.detail}</p></div>
+              </li>
+            ))}
+          </ol>
+        )}
+        {mission?.verdict && (
+          <div className={`verdict-card ${verdictClass}`}>
+            <div><span>Policy decision</span><strong>{mission.verdict.action.replace("_", " ")}</strong></div>
+            <b>{Math.round(mission.verdict.confidence * 100)}%</b>
+            <p>{mission.verdict.executive_summary}</p>
+            <small>
+              Receipt {mission.verdict.receipt_sha256.slice(0, 20)}… · {mission.verdict.engine}
+              {mission.next_review_at ? ` · review ${new Date(mission.next_review_at).toLocaleDateString()}` : ""}
+            </small>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function App() {
   const [results, setResults] = useState<CategoryResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -287,14 +461,14 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="FourProof home">
+        <a className="brand" href="#top" aria-label="FourProof Fleet home">
           <span className="brand-mark">4P</span>
-          <span>FourProof</span>
+          <span>FourProof Fleet</span>
         </a>
-        <nav aria-label="Marketplace categories">
-          {categoryOrder.map((category) => (
-            <a key={category} href={`#${category}`}>{categoryDefinitions[category].shortLabel}</a>
-          ))}
+        <nav aria-label="Product sections">
+          <a href="#mission">Mission control</a>
+          <a href="#registry">Live registry</a>
+          <a href="#architecture">Architecture</a>
         </nav>
         <button className="refresh-button" onClick={() => void load()} disabled={loading}>
           {loading ? "Syncing…" : "Refresh evidence"}
@@ -304,34 +478,36 @@ export default function App() {
       <main id="top">
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow">BNB Agent Studio marketplace concept</p>
-            <h1>Find the agent.<br />Check the receipts.</h1>
+            <p className="eyebrow">Zero-trust agent onboarding · Google ADK</p>
+            <h1>Hire the agent.<br />Not the risk.</h1>
             <p className="hero-lede">
-              Live BSC identity, discovery health, protocol support, and execution gates—before an agent gets near a wallet.
+              An autonomous review fleet intercepts third-party agents before production—proving identity, detecting tool poisoning, and sealing every decision to an evidence receipt.
             </p>
             <div className="hero-actions">
-              <a className="primary-button" href="#rebalancing">Browse four categories</a>
-              <a className="text-link" href="https://www.8004scan.io/" target="_blank" rel="noreferrer">Data source ↗</a>
+              <a className="primary-button" href="#mission">Run the red-team demo</a>
+              <a className="text-link" href="#architecture">See the evidence flow ↓</a>
             </div>
           </div>
-          <div className="hero-scorecard" aria-label="Live marketplace summary">
-            <p className="eyebrow">Live proof index</p>
+          <div className="hero-scorecard" aria-label="Fleet architecture summary">
+            <p className="eyebrow">Production-minded by default</p>
             <div className="scorecard-grid">
-              <div><strong>{stats.categories}/4</strong><span>categories live</span></div>
-              <div><strong>{stats.candidates}</strong><span>ranked identities</span></div>
-              <div><strong>{stats.operational}</strong><span>operational tier</span></div>
-              <div><strong>{stats.blocked}</strong><span>safely blocked</span></div>
+              <div><strong>3+1</strong><span>specialists + judge</span></div>
+              <div><strong>3.5</strong><span>Gemini Flash model</span></div>
+              <div><strong>256K</strong><span>bounded card bytes</span></div>
+              <div><strong>0</strong><span>secrets sent to targets</span></div>
             </div>
-            <p className="truth-note"><span /> Agent descriptions are claims. Green receipts are observed facts.</p>
+            <p className="truth-note"><span /> Untrusted AgentCard text stays data—never system instruction.</p>
           </div>
         </section>
 
-        <section className="method-strip" aria-label="How evidence moves through FourProof">
-          <div><span>01</span><strong>Discover</strong><small>Search all four required categories</small></div>
-          <div><span>02</span><strong>Verify</strong><small>Read registry and discovery evidence</small></div>
-          <div><span>03</span><strong>Gate</strong><small>Block untested targets or wallets</small></div>
-          <div><span>04</span><strong>Activate</strong><small>Generate a bounded, read-only plan</small></div>
+        <section className="method-strip" aria-label="How the fleet reviews external agents">
+          <div><span>01</span><strong>Scout</strong><small>Capture claims and immutable bytes</small></div>
+          <div><span>02</span><strong>Verify</strong><small>Separate identity claims from proof</small></div>
+          <div><span>03</span><strong>Guard</strong><small>Detect injection and unsafe targets</small></div>
+          <div><span>04</span><strong>Judge</strong><small>Quarantine, review, or sandbox</small></div>
         </section>
+
+        <MissionLab />
 
         {error && (
           <section className="error-panel">
@@ -348,25 +524,34 @@ export default function App() {
           </section>
         )}
 
-        <div className="categories-wrap">
+        <div className="categories-wrap" id="registry">
+          <header className="registry-intro">
+            <p className="eyebrow">Live agent registry</p>
+            <h2>The fleet starts from evidence already in the world.</h2>
+            <p>{stats.candidates} live BSC identities are currently ranked across {stats.categories}/4 discovery categories; {stats.blocked} remain blocked by missing evidence.</p>
+          </header>
           {categoryOrder.map((category) => {
             const result = results.find((item) => item.category.id === category);
             return result ? <CategorySection key={category} result={result} onSelect={setSelected} /> : null;
           })}
         </div>
 
-        <section className="disclosure">
-          <p className="eyebrow">Trust boundary</p>
-          <h2>No custody. No inferred performance. No green badge for a good pitch.</h2>
+        <section className="disclosure" id="architecture">
+          <p className="eyebrow">Cloud architecture</p>
+          <h2>Cloud Run executes. Firestore remembers. Pub/Sub retries. Receipts explain.</h2>
+          <figure className="architecture-figure">
+            <img src={architectureUrl} alt="FourProof Fleet zero-trust Google Cloud architecture" />
+            <figcaption>One bounded gateway, three independent reviewers, one fail-closed judge.</figcaption>
+          </figure>
           <p>
-            FourProof ranks observable identity and service evidence. It does not endorse returns, move funds, or treat an ERC-8004 registration as proof that an agent is safe or profitable.
+            Google ADK runs Registry Scout, Identity Verifier, and Tool Guard concurrently on Gemini 3.5 Flash, then routes their independent reports to a fail-closed Policy Judge. Every mission is persisted as an event stream; production secrets and private network targets never cross the gateway.
           </p>
         </section>
       </main>
 
       <footer>
-        <span>FourProof prototype · BSC mainnet identity reads</span>
-        <span>Built for The Smart Money Era · USD 0 received</span>
+        <span>FourProof Fleet · Gemini 3.5 Flash · Google ADK</span>
+        <span>Fortified Enterprise Fleet · explicit evidence, not endorsements</span>
       </footer>
 
       {selected && <Inspector agent={selected} onClose={() => setSelected(null)} />}

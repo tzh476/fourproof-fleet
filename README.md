@@ -1,94 +1,154 @@
-# FourProof BNB
+# FourProof Fleet
 
-FourProof is an evidence-first discovery interface for DeFi agents registered on BNB Smart Chain. It covers the four categories required by **The Smart Money Era: Build the Era** main track with equal depth:
+> Hire the agent. Not the risk.
 
-1. portfolio rebalancing;
-2. grid trading;
-3. yield optimisation;
-4. health-factor monitoring.
+FourProof Fleet is a zero-trust onboarding system for third-party AI agents. A procurement or compliance operator submits an AgentCard; three independent reviewers inspect discovery claims, identity evidence, and tool-safety boundaries in parallel. A final policy judge quarantines the agent, requests human review, or permits only an isolated sandbox. Every decision is sealed to a SHA-256 evidence receipt.
 
-The differentiator is a strict trust boundary. Agent descriptions are treated as publisher claims. The ranking score uses observed BSC registration, protocol metadata, scanner-observed discovery health, domain evidence, execution-target checks, metadata completeness, wallet publication, and feedback volume. Missing evidence blocks activation instead of being silently replaced with optimistic assumptions.
+![FourProof Fleet architecture](docs/architecture.svg)
 
-## Current status
+## Why this exists
 
-This is a working MVP with public source at `https://github.com/tzh476/fourproof-bnb` and a live demo at `https://fourproof-bnb.pages.dev`. It has not been registered as a hackathon submission, connected to a user wallet, registered as an ERC-8004 identity, or awarded any prize. USD 0 has been received.
+Enterprise agent catalogs make agents easy to discover, but discovery metadata is still publisher-controlled input. An attractive card can hide prompt injection, private-network targets, missing identity, or instructions to exfiltrate credentials. FourProof Fleet intercepts that onboarding workflow before production tools or secrets are exposed.
 
-Implemented:
+The product is built for the **Fortified Enterprise Fleet** category of the All Things Agentic Hackathon.
 
-- live 8004scan discovery on BSC mainnet;
-- equal-depth search and ranking for all four required categories;
-- schema validation at the external API boundary;
-- direct `ownerOf` and `tokenURI` verification against the canonical ERC-8004 registry;
-- transparent discovery-health, execution-target, and activation-blocking reasons;
-- bounded, read-only activation-plan generation that moves no funds and sends no messages;
-- four deterministic, first-party A2A reference endpoints for non-financial category demos;
-- responsive marketplace UI and deterministic unit tests.
+## What the fleet does
 
-Still required before a truthful contest submission:
+1. **Registry Scout** fetches a bounded AgentCard and hashes the exact inspected bytes.
+2. **Identity Verifier** separates declared owner/registry metadata from independently verified facts.
+3. **Tool Guard** detects instruction override, secret-exfiltration language, tool coercion, role impersonation, credential-bearing URLs, localhost, and private-network targets.
+4. **Policy Judge** combines the independent reports under a fail-closed policy.
+5. **Receipt Sealer** produces a canonical SHA-256 decision receipt and durable event stream.
+6. **Lifecycle Recheck** links a later review to the previous mission while preserving the review cadence, evidence hash, and receipt history across sessions.
 
-- resolve and validate real public A2A execution targets, then add a user-confirmed ERC-8183 activation path without exposing private keys;
-- complete wallet-owned onchain actions and any testnet/mainnet transactions;
-- record a demo video;
-- have the applicant personally accept the contest terms and submit the form.
+The Google ADK workflow graph is a real fan-out/fan-in topology:
 
-## Run locally
+```text
+START ─┬─> Registry Scout ───┐
+       ├─> Identity Verifier ├─> Policy Judge ─> Evidence Receipt
+       └─> Tool Guard ───────┘
+```
 
-Requirements: Node.js 22+ and npm 10+.
+## Google technology
+
+- **Gemini 3.5 Flash** (`gemini-3.5-flash`) performs the specialist reviews and final policy judgment.
+- **Google Agent Development Kit 2.8.0** provides the graph-based `Workflow`, typed agent outputs, tool boundaries, state, and runner.
+- **Cloud Run** hosts the API and production frontend.
+- **Firestore** persists missions, events, verdicts, and failure state across instances.
+- **Pub/Sub** decouples intake from execution and retries failed missions. Push requests require a verified OIDC token from one configured service account.
+- **Cloud Logging** receives structured Cloud Run runtime logs.
+- **ADK OpenTelemetry instrumentation** creates spans around agent execution; the application also emits secret-free structured mission-stage logs correlated by mission id.
+
+No Gemini or Google Cloud execution is claimed when credentials are absent. The public UI exposes `geminiConfigured`, runtime, store, queue, model, and framework through `/healthz`. Deterministic fixtures are labeled `deterministic_demo` and never represented as model output.
+
+## Security boundary
+
+- AgentCard content is data, never system instruction.
+- Only `http` and `https` targets are accepted.
+- URL credentials, loopback, link-local, private, reserved, multicast, and `.local` targets are blocked.
+- DNS is resolved before a live fetch; any private result fails closed.
+- Redirects are not followed and AgentCards are capped at 256 KB.
+- No target receives a secret, cookie, API key, wallet credential, or production tool capability.
+- Pub/Sub execution requests require Google-issued OIDC plus an exact service-account email and audience match.
+- A code-level policy guard overrides any model attempt to allow an agent with injection, blocked endpoints, contradictory identity, or incomplete evidence.
+- One immutable AgentCard snapshot is shared across all parallel reviewers, and its hash is part of the final receipt.
+- The public deployment restricts live reviews to its controlled AgentCard host, caps missions per instance and hour, and bounds Cloud Run instances.
+- Missing evidence produces human review or quarantine, never optimistic activation.
+
+See [docs/threat-model.md](docs/threat-model.md) for attack cases and residual risks.
+
+## Reproduce locally
+
+Requirements:
+
+- Node.js 22+
+- Python 3.13+ (the current local verification used Python 3.14.6)
+- npm 10+
 
 ```bash
-npm install
+python3 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+npm ci
 npm run check
-npm run dev
-# Or run the frontend and Pages Functions together:
-npm run dev:pages
+npm run build
+PYTHONPATH=backend STATIC_DIR=dist .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8876
 ```
 
-Open the URL printed by Vite. The app calls the public 8004scan API and BSC RPC from the browser; it does not require an API key.
+Open `http://127.0.0.1:8876`.
 
-## Evidence model
+The two embedded fixtures work without credentials and are explicitly labeled. A live external target requires Gemini configuration.
 
-The evidence tier is intentionally monotonic:
+### Gemini API mode
 
-```text
-metadata-only
-  -> registered (canonical BSC ERC-8004 identity)
-  -> reachable (A2A/MCP plus healthy or degraded discovery metadata)
-  -> operational (verified discovery domain, bounded execution-target check, and published agent wallet)
+```bash
+export GOOGLE_API_KEY="your-api-key"
 ```
 
-An onchain identity is not proof of safety, profitability, or correct output. FourProof never turns a description, token registration, or high self-reported score into an endorsement.
+### Vertex AI mode
 
-## Data sources
-
-- `https://api.8004scan.io/api/v1/agents`: indexed ERC-8004 metadata and health observations, accessed through a same-origin, read-only proxy.
-- BSC mainnet RPC: direct registry reads.
-- Canonical BSC ERC-8004 registry: `0x8004a169fb4a3325136eb29fa0ceb6d2e539a432`.
-
-The browser never receives an API credential. Local Vite development proxies the allowlisted read routes, and `functions/api/8004scan/[[path]].ts` provides the same route shape for Cloudflare Pages. The proxy accepts only agent-list queries on chain 56 and numeric BSC agent-detail paths.
-
-A marketplace refresh makes at most 24 upstream requests: one focused search and up to five detail reads for each category. This stays below the current unauthenticated 30-request-per-minute limit and avoids silently dropping later categories.
-
-## First-party A2A reference suite
-
-The Pages Function route `/agents/:category/*` exposes one AgentCard and one A2A `message/send` endpoint for each required category. These endpoints accept structured caller-supplied observations and return deterministic plans or explicit rejections. They do not fetch private data, place trades, hold funds, or claim live prices.
-
-```text
-GET  /agents/rebalancing/.well-known/agent-card.json
-POST /agents/rebalancing/a2a
-GET  /agents/grid-trading/.well-known/agent-card.json
-POST /agents/grid-trading/a2a
-GET  /agents/yield-optimisation/.well-known/agent-card.json
-POST /agents/yield-optimisation/a2a
-GET  /agents/health-factor/.well-known/agent-card.json
-POST /agents/health-factor/a2a
+```bash
+export GOOGLE_GENAI_USE_VERTEXAI="TRUE"
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="global"
 ```
 
-They are publicly deployed under `https://fourproof-bnb.pages.dev/agents/`, but they are not represented as BSC identities until the applicant personally signs ERC-8004 registration transactions. The UI therefore does not present them as registered or operational.
+Never commit either an API key or application-default credential file.
 
-## Security and financial boundary
+## API
 
-- No seed phrase, private key, wallet password, or payment credential belongs in this project.
-- The MVP does not send transactions or agent messages.
-- Activation plans are local JSON with read-only, no-custody, and no-trading controls. They require both a fresh BSC owner proof and a separately validated execution target.
-- A future transaction path must use an injected user wallet, display chain/contract/amount/expiry, and require an explicit user signature.
-- This project does not claim that any surfaced agent is safe or profitable.
+```bash
+curl -sS -X POST http://127.0.0.1:8876/api/missions \
+  -H 'Content-Type: application/json' \
+  --data '{
+    "target_url": "https://demo.fourproof.invalid/poisoned",
+    "demo_case": "poisoned",
+    "objective": "Decide whether this external agent may enter an isolated enterprise sandbox."
+  }'
+```
+
+Poll `GET /api/missions/{mission_id}`. The poisoned fixture must finish with `quarantine`, four independent injection signals, a blocked loopback endpoint, and a 64-character receipt hash.
+
+After a mission reaches a terminal state, `POST /api/missions/{mission_id}/recheck` queues a linked review. An unchanged deterministic fixture produces the same receipt; a changed live AgentCard produces a new evidence hash and receipt.
+
+## Deploy to Google Cloud
+
+The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it.
+
+The script configures Cloud Run, Firestore, Pub/Sub with OIDC push authentication, Vertex AI access, service identity, max instances, and scale-to-zero. After deployment, verify every item in [docs/cloud-proof-checklist.md](docs/cloud-proof-checklist.md) and record the Cloud Run console plus live mission in the demo video.
+
+## Submission assets
+
+- [Devpost text draft](docs/submission-draft.md)
+- [3:35 demo script](docs/demo-script.md)
+- [top-five judging scorecard](docs/judging-scorecard.md)
+- [architecture source](docs/architecture.svg) and [1600×900 PNG](docs/architecture.png)
+- [1600×900 cover image](docs/cover.png)
+- [threat model](docs/threat-model.md) and [live cloud proof checklist](docs/cloud-proof-checklist.md)
+
+## Verification status
+
+Verified locally on 2026-08-30:
+
+- 13 frontend/domain tests passed;
+- 32 Python API/security/ADK graph/queue tests passed;
+- TypeScript production build passed;
+- Python dependency consistency passed;
+- browser QA loaded the live BSC registry and handled its changing category result counts without treating discovery as endorsement;
+- the production-built UI ran the poisoned mission end to end and sealed a `quarantine` receipt;
+- `npm audit` reported zero vulnerabilities.
+
+Not yet verified:
+
+- a real Gemini invocation (credentials are not present locally);
+- Firestore/Pub/Sub execution against a Google Cloud project;
+- Cloud Run deployment and logs;
+- the public four-minute video;
+- Devpost entry receipt.
+
+Those states must not be inferred from code or green local tests.
+
+## Contest-period and reuse disclosure
+
+This project was created during the All Things Agentic submission period. It adapts the UI, BSC discovery proxy, registry ranking, and read-only evidence concepts from [FourProof BNB](https://github.com/tzh476/fourproof-bnb), first created on 2026-08-29, also within the submission period. The Google ADK workflow, Gemini agent graph, mission API, prompt-injection guard, SSRF boundary, Firestore store, Pub/Sub/OIDC queue, receipt sealing, cloud deployment materials, and agent-onboarding product flow are new work for FourProof Fleet.
+
+Open-source libraries and Google services remain subject to their own licenses and terms. Codex was used as a coding assistant; all claims above are tied to commands, code, or live observations rather than authorship assumptions.

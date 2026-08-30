@@ -1,68 +1,93 @@
-# Build the Era submission draft — not submitted
+# Devpost submission draft
+
+This is working copy, not a submitted entry. The applicant must verify every declaration and perform the final submission personally.
 
 ## Project name
 
-FourProof
+FourProof Fleet
+
+## Tagline
+
+Hire the agent. Not the risk.
+
+## Category
+
+Fortified Enterprise Fleet
 
 ## One-line pitch
 
-An evidence-first BNB agent marketplace that separates identity, discovery health, and execution readiness across all four required DeFi categories before an agent gets near a wallet.
+FourProof Fleet is a Google ADK and Gemini 3.5 zero-trust gate that reviews third-party AgentCards in parallel, quarantines unsafe agents, and seals every decision to a reproducible evidence receipt.
 
-## Project description
+## Inspiration
 
-FourProof turns BSC's large ERC-8004 agent registry into a usable, falsifiable marketplace. It discovers agents in portfolio rebalancing, grid trading, yield optimisation, and health-factor monitoring with equal depth. Each candidate receives an evidence score built from canonical BSC registration, A2A/MCP support, scanner-observed discovery health, domain evidence, execution-target checks, metadata completeness, wallet publication, and feedback—not promotional claims.
+Agent registries are becoming app stores for autonomous software. They make agents discoverable, but discovery metadata is still supplied by the publisher. Enterprises need a boundary between “this agent exists” and “this agent may touch our tools, data, or credentials.” FourProof Fleet turns onboarding into an evidence-producing workflow instead of a trust-by-description decision.
 
-Users can inspect the exact registry token, owner, registration transaction, discovery URL, health-check timestamp, and blocking reasons. A direct BSC read verifies `ownerOf` and `tokenURI` independently of the indexer. Only candidates that also pass domain and execution-target checks can produce a bounded activation plan; the MVP plan is explicitly read-only, non-custodial, non-trading, and expires after 30 minutes.
+## What it does
 
-The product's central bet is that discovery without evidence is not a marketplace: it is a directory. FourProof makes missing evidence visible and makes unsafe optimism impossible to hide behind a polished agent description.
+An operator submits an AgentCard URL. Three independent specialists run in parallel:
 
-## Prototype stage
+- Registry Scout performs a bounded fetch, records provenance, and hashes the exact inspected evidence.
+- Identity Verifier separates declared owner and registry fields from independently verified facts.
+- Tool Guard detects prompt injection, secret exfiltration, tool coercion, role impersonation, credential-bearing URLs, and private-network targets.
 
-Working MVP with a public source repository and live Cloudflare Pages deployment at `https://fourproof-bnb.pages.dev`. Wallet-owned registration or activation and contest submission are still pending.
+A Policy Judge combines the typed reports and returns only one of three bounded outcomes: isolated sandbox, human review, or quarantine. A receipt sealer canonicalizes the evidence and produces a SHA-256 decision receipt. The UI exposes the full mission timeline, engine, model, reasons, receipt, and next lifecycle review date. A linked recheck preserves the previous mission id, allowing an enterprise to compare evidence across long-running review cycles.
 
-## BNB integration
+## How we built it
 
-- BSC mainnet ERC-8004 identity data.
-- Canonical Identity Registry `0x8004a169fb4a3325136eb29fa0ceb6d2e539a432`.
-- Live `ownerOf` and `tokenURI` reads via BSC RPC.
-- BscScan links for identities and registration transactions.
-- Four publicly deployed first-party deterministic A2A reference services; applicant-signed ERC-8004 registration remains pending.
-- Future user-wallet activation through the official BNB Agent SDK / ERC-8183 stack after an explicit transaction review.
+The backend is FastAPI on Cloud Run. Mission state and event history live in Firestore. Pub/Sub decouples intake from execution and authenticates push deliveries with Google OIDC. Google ADK 2.8 defines a fan-out/fan-in `Workflow`: Registry Scout, Identity Verifier, and Tool Guard run concurrently, then Policy Judge runs after all three complete. Gemini 3.5 Flash (`gemini-3.5-flash`) powers typed specialist reports and the policy decision. ADK's OpenTelemetry instrumentation and secret-free structured Cloud Logging events share the mission id for end-to-end correlation.
 
-## Claims we do not make
+The security boundary validates URL schemes and credentials, resolves DNS, rejects private and reserved destinations, disables redirects, caps responses at 256 KB, and never sends target content a secret or production tool. Model outputs are validated with Pydantic. Uncaught errors become explicit failed missions rather than activation decisions.
 
-- Registration does not mean an agent is safe, endorsed, or profitable.
-- A published discovery URL does not mean its execution target is callable.
-- A healthy AgentCard does not prove execution health or output quality.
-- No prize, customer, revenue, or payment exists.
+The React/Vite frontend also includes read-only BSC ERC-8004 identity discovery across four categories. The live registry is context; its metadata is never treated as proof of enterprise safety.
 
-## Form-ready answers
+## Challenges we ran into
 
-These answers mirror the live Google Form inspected on 2026-08-29. They exclude contact details, wallet data, personal experience claims, availability, and agreement choices.
+The hardest design problem was preventing the reviewer from becoming the attack surface. A naive “send this URL to an LLM” implementation risks SSRF, prompt injection, and false identity claims. We therefore separated bounded evidence collection from model judgment, removed redirects and credentials, used typed outputs, and treated all card text as quoted evidence. Another challenge was making retries auditable: queue redelivery, durable state, terminal idempotency, and failure events had to agree.
 
-| Form field | Draft answer |
-| --- | --- |
-| How did you hear about this hackathon? | BNB Chain Website |
-| Solo or team | Solo |
-| Number of teammates | 1 (Solo) |
-| Project name | FourProof |
-| One-line pitch | An evidence-first BNB agent marketplace that separates identity, discovery health, and execution readiness across all four required DeFi categories before an agent gets near a wallet. |
-| Project description | Use the three paragraphs under **Project description** above. |
-| Sub-prize tracks | Not sure. Do not select a partner track unless the implementation actually satisfies that partner's published requirements. |
-| GitHub repository | https://github.com/tzh476/fourproof-bnb |
-| Prototype stage | Working MVP |
-| Public demo | https://fourproof-bnb.pages.dev |
+## Accomplishments that we are proud of
 
-The current form does not provide a separate public-demo field. The repository README links the live deployment so reviewers can reach it from the required GitHub field.
+- A real Google ADK graph with three concurrent specialists and one fan-in judge.
+- Explainable fail-closed outcomes instead of a generic safety score.
+- Exact evidence and decision hashing for reproducible receipts.
+- An authenticated Pub/Sub/Cloud Run boundary with durable Firestore events.
+- Explicit runtime disclosure: deterministic fixtures cannot masquerade as Gemini or Google Cloud execution.
+- Adversarial tests for prompt injection, SSRF, forged queue delivery, duplicate execution, and benign-but-unverified agents.
 
-## Remaining form fields owned by the applicant
+## What we learned
 
-- Google account login and recorded-email choice;
-- full name, email, country/timezone, and any optional Discord handle;
-- Telegram handle;
-- X handle;
-- BSC/EVM experience level and personal skills;
-- mentorship preference and availability confirmation;
-- wallet address;
-- participation-terms acceptance;
-- final submission.
+Agent identity, capability, and safety are different claims. Registry presence proves discovery, not ownership or safe behavior. Parallel reviewers improve coverage only if their evidence remains independent and a final policy remains bounded. We also learned that provenance is a product feature: showing the engine, model, state transitions, and receipt makes a verdict inspectable rather than magical.
+
+## What's next
+
+- direct ERC-8004 owner and registration-event verification;
+- lease heartbeats and transactional event appends for stronger crash recovery;
+- controlled egress through a destination-enforcing proxy;
+- signed policy bundles and organization-specific approval thresholds;
+- continuous re-review when an AgentCard, endpoint, or on-chain identity changes.
+
+## Built with
+
+Gemini 3.5 Flash, Google Agent Development Kit, Cloud Run, Firestore, Pub/Sub, Cloud Logging, Vertex AI, FastAPI, Pydantic, React, TypeScript, Vite, viem, BSC ERC-8004.
+
+## Links (replace after live verification)
+
+- Demo: `[TBD_CLOUD_RUN_URL]`
+- Repository: `[TBD_PUBLIC_REPOSITORY_URL]`
+- Video: `[TBD_PUBLIC_VIDEO_URL]`
+- Architecture: `docs/architecture.svg`
+
+## Reproducibility
+
+Run `npm run check` for frontend tests, backend/security tests, TypeScript checking, and a production build. Local deterministic fixtures are clearly labeled and require no credentials. The submitted video must show a separate real Gemini/ADK mission with `engine=gemini_adk` and live Google Cloud state.
+
+## Contest-period and reused-work disclosure
+
+FourProof Fleet was created during the contest period. It adapts the UI, BSC discovery proxy, registry ranking, and read-only evidence concepts from FourProof BNB, first created on 2026-08-29, also within the contest period. The Google ADK workflow, Gemini graph, mission API, safety boundary, Firestore/Pub/Sub execution, evidence receipt, deployment materials, and enterprise onboarding flow are new for FourProof Fleet. Codex was used as a coding assistant.
+
+## Applicant-owned final checks
+
+- Confirm the project and reused-work disclosure satisfy the official rules.
+- Confirm every team member, eligibility, privacy, IP, and AI-assistance statement.
+- Accept any rules, terms, or declarations personally.
+- Verify the public demo, repository, video, architecture, and all written claims.
+- Perform the final Devpost submission and preserve the receipt.

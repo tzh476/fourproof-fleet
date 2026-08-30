@@ -1,5 +1,3 @@
-import { createPublicClient, http, isAddressEqual } from "viem";
-import { bsc } from "viem/chains";
 import type { RankedAgent, RegistryProof } from "./types";
 
 const identityRegistryAbi = [
@@ -19,14 +17,17 @@ const identityRegistryAbi = [
   },
 ] as const;
 
-const publicClient = createPublicClient({
-  chain: bsc,
-  transport: http("https://bsc-dataseed.bnbchain.org"),
-});
-
 export async function verifyRegistryProof(agent: RankedAgent): Promise<RegistryProof> {
   if (!/^\d+$/.test(agent.tokenId)) throw new Error("Invalid numeric token ID");
 
+  const [{ createPublicClient, http, isAddressEqual }, { bsc }] = await Promise.all([
+    import("viem"),
+    import("viem/chains"),
+  ]);
+  const publicClient = createPublicClient({
+    chain: bsc,
+    transport: http("https://bsc-dataseed.bnbchain.org"),
+  });
   const tokenId = BigInt(agent.tokenId);
   const [owner, tokenUri, blockNumber] = await Promise.all([
     publicClient.readContract({

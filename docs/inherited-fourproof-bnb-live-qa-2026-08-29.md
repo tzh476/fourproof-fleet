@@ -1,4 +1,6 @@
-# Live QA — 2026-08-29
+# Inherited FourProof BNB live QA — 2026-08-29
+
+> Historical evidence for the reused BSC discovery UI only. It is not FourProof Fleet Gemini, ADK, or Google Cloud proof.
 
 This report records observed behavior, not an endorsement of any indexed agent.
 

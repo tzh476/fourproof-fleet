@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">FourProof Fleet architecture</title>
+  <desc id="desc">A zero-trust agent onboarding workflow on Google Cloud with Cloud Run, Firestore, Pub/Sub, Google ADK, Gemini 3.5 Flash, three parallel reviewers, a policy judge, and a SHA-256 evidence receipt.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07140f"/>
+      <stop offset="0.55" stop-color="#0a1b14"/>
+      <stop offset="1" stop-color="#07110d"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#19e68c"/>
+      <stop offset="1" stop-color="#6effb1"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.32"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#48ef9f"/>
+    </marker>
+    <style>
+      .eyebrow { font: 700 18px Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: 3px; fill: #62f5ad; }
+      .title { font: 800 54px Inter, ui-sans-serif, system-ui, sans-serif; fill: #f1fff7; }
+      .subtitle { font: 400 21px Inter, ui-sans-serif, system-ui, sans-serif; fill: #a8c8b8; }
+      .label { font: 750 21px Inter, ui-sans-serif, system-ui, sans-serif; fill: #effff6; }
+      .small { font: 500 15px Inter, ui-sans-serif, system-ui, sans-serif; fill: #a9c4b6; }
+      .micro { font: 700 13px Inter, ui-sans-serif, system-ui, sans-serif; fill: #65efa9; letter-spacing: 1px; }
+      .box { fill: #10271d; stroke: #2b6047; stroke-width: 2; }
+      .box2 { fill: #0c2118; stroke: #397c5c; stroke-width: 2; }
+      .agent { fill: #133324; stroke: #40b978; stroke-width: 2; }
+      .flow { fill: none; stroke: #48ef9f; stroke-width: 3; marker-end: url(#arrow); }
+      .softflow { fill: none; stroke: #3a7658; stroke-width: 2.5; stroke-dasharray: 8 8; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1435" cy="130" r="270" fill="#0e8e57" opacity="0.08"/>
+  <circle cx="155" cy="820" r="235" fill="#23d784" opacity="0.05"/>
+
+  <text x="72" y="72" class="eyebrow">FOURPROOF FLEET</text>
+  <text x="72" y="132" class="title">Zero-trust agent onboarding</text>
+  <text x="72" y="174" class="subtitle">Untrusted AgentCard → parallel evidence → bounded policy → reproducible receipt</text>
+
+  <g filter="url(#shadow)">
+    <rect x="70" y="286" width="220" height="130" rx="22" class="box"/>
+    <circle cx="118" cy="337" r="22" fill="#1c4b35" stroke="#58eea6" stroke-width="2"/>
+    <path d="M107 337h22M118 326v22" stroke="#70ffb5" stroke-width="3" stroke-linecap="round"/>
+    <text x="154" y="332" class="label">Operator</text>
+    <text x="154" y="359" class="small">AgentCard URL</text>
+    <text x="94" y="392" class="micro">UNTRUSTED INPUT</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="372" y="246" width="244" height="210" rx="24" class="box2"/>
+    <text x="400" y="283" class="micro">GOOGLE CLOUD</text>
+    <text x="400" y="326" class="label">Cloud Run API</text>
+    <text x="400" y="354" class="small">FastAPI + React</text>
+    <line x1="400" y1="376" x2="586" y2="376" stroke="#315a46"/>
+    <text x="400" y="404" class="small">URL / DNS boundary</text>
+    <text x="400" y="430" class="small">256 KB • no redirects</text>
+  </g>
+
+  <path d="M290 351 H363" class="flow"/>
+
+  <g filter="url(#shadow)">
+    <rect x="686" y="226" width="600" height="472" rx="30" fill="#0b1d15" stroke="#35a86c" stroke-width="2.5"/>
+    <text x="720" y="266" class="micro">GOOGLE AGENT DEVELOPMENT KIT 2.8</text>
+    <text x="720" y="307" class="label">Workflow · fan-out / fan-in</text>
+
+    <rect x="720" y="342" width="244" height="92" rx="18" class="agent"/>
+    <text x="744" y="376" class="label">Registry Scout</text>
+    <text x="744" y="405" class="small">bounded fetch + exact hash</text>
+
+    <rect x="720" y="460" width="244" height="92" rx="18" class="agent"/>
+    <text x="744" y="494" class="label">Identity Verifier</text>
+    <text x="744" y="523" class="small">claims ≠ verified facts</text>
+
+    <rect x="720" y="578" width="244" height="92" rx="18" class="agent"/>
+    <text x="744" y="612" class="label">Tool Guard</text>
+    <text x="744" y="641" class="small">injection + SSRF boundary</text>
+
+    <path d="M964 388 C1010 388 1007 493 1041 493" class="flow"/>
+    <path d="M964 506 H1041" class="flow"/>
+    <path d="M964 624 C1010 624 1007 519 1041 519" class="flow"/>
+
+    <rect x="1050" y="420" width="202" height="174" rx="22" fill="#163c29" stroke="#63f0aa" stroke-width="2.5"/>
+    <text x="1076" y="461" class="micro">GEMINI 3.5 FLASH</text>
+    <text x="1076" y="503" class="label">Policy Judge</text>
+    <text x="1076" y="534" class="small">typed evidence only</text>
+    <text x="1076" y="562" class="small">fail closed</text>
+  </g>
+
+  <path d="M616 319 C649 319 651 388 677 388" class="flow"/>
+  <path d="M616 351 C649 351 651 506 677 506" class="flow"/>
+  <path d="M616 383 C649 383 651 624 677 624" class="flow"/>
+
+  <g filter="url(#shadow)">
+    <rect x="1360" y="254" width="174" height="124" rx="21" class="box"/>
+    <text x="1384" y="290" class="micro">FIRESTORE</text>
+    <text x="1384" y="326" class="label">Durable state</text>
+    <text x="1384" y="352" class="small">events + verdict</text>
+
+    <rect x="1360" y="414" width="174" height="124" rx="21" class="box"/>
+    <text x="1384" y="450" class="micro">PUB/SUB + OIDC</text>
+    <text x="1384" y="486" class="label">Retry queue</text>
+    <text x="1384" y="512" class="small">authenticated push</text>
+
+    <rect x="1360" y="574" width="174" height="124" rx="21" fill="#173d2a" stroke="#58eda3" stroke-width="2.5"/>
+    <text x="1384" y="610" class="micro">SHA-256</text>
+    <text x="1384" y="646" class="label">Evidence receipt</text>
+    <text x="1384" y="672" class="small">canonical decision</text>
+  </g>
+
+  <path d="M616 295 C920 194 1230 193 1351 300" class="softflow"/>
+  <path d="M1351 476 C1316 476 1316 353 1289 353" class="softflow"/>
+  <path d="M1252 527 C1305 527 1308 636 1351 636" class="flow"/>
+  <text x="1362" y="727" class="micro">CLOUD LOGGING • OTEL</text>
+
+  <g>
+    <rect x="70" y="745" width="1464" height="88" rx="22" fill="#0e2319" stroke="#28543f"/>
+    <text x="98" y="779" class="micro">BOUNDED OUTCOMES</text>
+    <rect x="304" y="765" width="258" height="46" rx="23" fill="#163927"/>
+    <text x="348" y="794" class="label" font-size="18">ALLOW SANDBOX</text>
+    <rect x="592" y="765" width="258" height="46" rx="23" fill="#3a3518"/>
+    <text x="634" y="794" class="label" font-size="18">HUMAN REVIEW</text>
+    <rect x="880" y="765" width="258" height="46" rx="23" fill="#451e22"/>
+    <text x="942" y="794" class="label" font-size="18">QUARANTINE</text>
+    <text x="1191" y="794" class="small">No production activation</text>
+  </g>
+
+  <text x="72" y="868" class="small">Every runtime surface discloses engine, model, store, queue, and receipt provenance.</text>
+</svg>

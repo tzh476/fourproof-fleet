@@ -1,0 +1,27 @@
+{
+  "name": "Invoice Reconciliation Scout",
+  "description": "Reads redacted invoice totals and returns a discrepancy report for human review.",
+  "version": "1.4.2-cloud-demo",
+  "url": "https://fourproof-bnb.pages.dev/agents/rebalancing/a2a",
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "skills": [
+    {
+      "id": "reconcile",
+      "name": "Reconcile invoice totals",
+      "description": "Compare caller-supplied totals without sending payments or mutating ledgers.",
+      "tags": ["read-only", "finance-ops", "human-review"]
+    }
+  ],
+  "identity": {
+    "registry": "eip155:56:0x8004a169fb4a3325136eb29fa0ceb6d2e539a432",
+    "tokenId": "demo-safe",
+    "owner": "0x1111111111111111111111111111111111111111",
+    "verification": "declared-demo"
+  },
+  "controls": ["no-custody", "no-payment", "redacted-input-only", "human-approval-required"],
+  "fixtureNotice": "Public benign test data for FourProof Fleet. Identity remains self-declared."
+}
