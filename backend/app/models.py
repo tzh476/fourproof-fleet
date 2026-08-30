@@ -38,18 +38,18 @@ class MissionRequest(BaseModel):
 
 
 class EvidenceItem(BaseModel):
-    evidence_id: str
-    source: str
-    observed: str
+    evidence_id: str = Field(max_length=80)
+    source: str = Field(max_length=500)
+    observed: str = Field(max_length=700)
     sha256: str | None = None
 
 
 class ScoutReport(BaseModel):
-    subject_name: str
-    summary: str
-    declared_capabilities: list[str]
-    endpoints: list[str]
-    evidence: list[EvidenceItem]
+    subject_name: str = Field(max_length=160)
+    summary: str = Field(max_length=400)
+    declared_capabilities: list[str] = Field(max_length=12)
+    endpoints: list[str] = Field(max_length=4)
+    evidence: list[EvidenceItem] = Field(min_length=1, max_length=2)
 
 
 class IdentityReport(BaseModel):
@@ -57,16 +57,27 @@ class IdentityReport(BaseModel):
     owner: str | None = None
     registry: str | None = None
     token_id: str | None = None
-    contradictions: list[str]
-    evidence: list[EvidenceItem]
+    contradictions: list[str] = Field(max_length=4)
+    evidence: list[EvidenceItem] = Field(min_length=1, max_length=2)
 
 
 class GuardReport(BaseModel):
-    injection_signals: list[str]
+    injection_signals: list[str] = Field(max_length=8)
     endpoint_state: Literal["reachable", "policy_passed", "blocked", "unreachable", "missing"]
-    endpoint_notes: list[str]
-    data_exposure_risks: list[str]
-    evidence: list[EvidenceItem]
+    endpoint_notes: list[str] = Field(max_length=6)
+    data_exposure_risks: list[str] = Field(max_length=6)
+    evidence: list[EvidenceItem] = Field(min_length=1, max_length=2)
+
+
+class ModelVerdict(BaseModel):
+    """Compact model-owned fields; hashes and engine are runtime-owned."""
+
+    action: Literal["allow_sandbox", "human_review", "quarantine"]
+    confidence: float = Field(ge=0, le=1)
+    executive_summary: str = Field(max_length=280)
+    rationale: list[str] = Field(min_length=1, max_length=3)
+    required_controls: list[str] = Field(max_length=5)
+    evidence_ids: list[str] = Field(min_length=1, max_length=3)
 
 
 class MissionVerdict(BaseModel):
