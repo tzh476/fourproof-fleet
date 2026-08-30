@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
+from .agents import MAX_LLM_CALLS_PER_MISSION, MAX_OUTPUT_TOKENS_PER_CALL
 from .fixtures import fixture_for
 from .models import MissionEvent, MissionRecord, MissionRequest
 from .orchestrator import deterministic_demo, gemini_adk_run
@@ -34,7 +35,7 @@ if not logger.handlers:
     structured_handler.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(structured_handler)
 logger.propagate = False
-mission_window: deque[float] = deque()
+mission_windows: dict[str, deque[float]] = {"live": deque(), "fixture": deque()}
 mission_window_lock = asyncio.Lock()
 app.add_middleware(
     CORSMiddleware,
@@ -70,15 +71,42 @@ def live_target_allowed(target_url: str) -> bool:
     return not configured or (urlsplit(target_url).hostname or "").lower() in configured
 
 
-async def reserve_mission_budget() -> None:
+def live_mission_total_limit() -> int:
+    return max(0, int(os.getenv("LIVE_MISSION_TOTAL_LIMIT", "0")))
+
+
+def live_budget_id() -> str:
+    raw = os.getenv("APP_GIT_SHA", "local-unversioned")
+    return re.sub(r"[^0-9A-Za-z_.-]", "-", raw)[:80]
+
+
+async def reserve_mission_budget(store: MissionStore, *, uses_gemini: bool) -> None:
     limit = max(1, int(os.getenv("MISSION_LIMIT_PER_HOUR", "60")))
     cutoff = monotonic() - 3600
+    window = mission_windows["live" if uses_gemini else "fixture"]
     async with mission_window_lock:
-        while mission_window and mission_window[0] < cutoff:
-            mission_window.popleft()
-        if len(mission_window) >= limit:
+        while window and window[0] < cutoff:
+            window.popleft()
+        if len(window) >= limit:
             raise HTTPException(status_code=429, detail="public mission budget exhausted; retry after the rolling window")
-        mission_window.append(monotonic())
+        window.append(monotonic())
+    total_limit = live_mission_total_limit()
+    if not uses_gemini or total_limit == 0:
+        return
+    used = await store.reserve_live_budget(live_budget_id(), total_limit)
+    if used is None:
+        raise HTTPException(status_code=429, detail="this deployed revision exhausted its total live Gemini mission budget")
+    logger.info(
+        json.dumps(
+            {
+                "event": "live_mission_budget_reserved",
+                "budget_id": live_budget_id(),
+                "used": used,
+                "limit": total_limit,
+            },
+            separators=(",", ":"),
+        )
+    )
 
 
 def public_runtime_error(error: Exception) -> str:
@@ -145,8 +173,11 @@ async def healthz() -> dict[str, object]:
         "queue": "pubsub" if pubsub_topic() else "in-process",
         "runtime": "google-cloud-run" if os.getenv("K_SERVICE") else "local",
         "observability": "adk-opentelemetry+structured-cloud-logging",
-        "gitSha": os.getenv("APP_GIT_SHA", "uncommitted-local"),
+        "gitSha": os.getenv("APP_GIT_SHA", "local-unversioned"),
         "missionLimitPerHourPerInstance": max(1, int(os.getenv("MISSION_LIMIT_PER_HOUR", "60"))),
+        "liveMissionTotalLimit": live_mission_total_limit(),
+        "maxLlmCallsPerMission": MAX_LLM_CALLS_PER_MISSION,
+        "maxOutputTokensPerCall": MAX_OUTPUT_TOKENS_PER_CALL,
         "liveTargetPolicy": "allowlist" if os.getenv("ALLOWED_LIVE_HOSTS", "").strip() else "any-public-host",
     }
 
@@ -202,10 +233,10 @@ async def enqueue_mission(
         raise HTTPException(status_code=503, detail="Gemini is not configured; select an explicit demo fixture or configure Google credentials.")
     if request.demo_case is None and not live_target_allowed(str(request.target_url)):
         raise HTTPException(status_code=403, detail="live target is outside the deployed allowlist")
-    await reserve_mission_budget()
     mission_id = uuid.uuid4().hex
     store = get_store()
     uses_gemini = has_gemini_auth() and request.demo_case is None
+    await reserve_mission_budget(store, uses_gemini=uses_gemini)
     record = MissionRecord(
         mission_id=mission_id,
         target_url=str(request.target_url),

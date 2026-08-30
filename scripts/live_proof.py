@@ -46,7 +46,7 @@ def canonical_sha256(value: Any) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def validate_health(payload: dict[str, Any], expected_git_sha: str) -> None:
+def validate_health(payload: dict[str, Any], expected_git_sha: str, expected_live_mission_limit: int) -> None:
     expected = {
         "ok": True,
         "runtime": "google-cloud-run",
@@ -57,6 +57,9 @@ def validate_health(payload: dict[str, Any], expected_git_sha: str) -> None:
         "googleAdk": "2.8.0",
         "liveTargetPolicy": "allowlist",
         "gitSha": expected_git_sha,
+        "liveMissionTotalLimit": expected_live_mission_limit,
+        "maxLlmCallsPerMission": 8,
+        "maxOutputTokensPerCall": 2_048,
     }
     mismatches = {
         key: {"expected": value, "observed": payload.get(key)}
@@ -167,27 +170,50 @@ def _launch_mission(base_url: str, case: str, timeout_seconds: int) -> dict[str,
     return _poll_mission(base_url, created["mission_id"], time.monotonic() + timeout_seconds)
 
 
-def _firestore_document(project_id: str, collection: str, mission_id: str) -> dict[str, Any]:
+def _firestore_document(project_id: str, collection: str, document_id: str) -> dict[str, Any]:
     token_process = subprocess.run(
         ["gcloud", "auth", "print-access-token"], check=False, capture_output=True, text=True
     )
     token = token_process.stdout.strip()
     if token_process.returncode != 0 or not token:
         raise ProofError("could not obtain a temporary gcloud access token for read-only Firestore proof")
-    document_path = "/".join(urllib.parse.quote(part, safe="") for part in (collection, mission_id))
+    document_path = "/".join(urllib.parse.quote(part, safe="") for part in (collection, document_id))
     url = (
         f"https://firestore.googleapis.com/v1/projects/{urllib.parse.quote(project_id, safe='')}"
         f"/databases/(default)/documents/{document_path}"
     )
     status, document = _request_json(url, headers={"Authorization": f"Bearer {token}"})
     if status != 200:
-        raise ProofError(f"Firestore did not return mission {mission_id}: HTTP {status}")
+        raise ProofError(f"Firestore did not return document {document_id}: HTTP {status}")
+    return document
+
+
+def _validate_firestore_mission(document: dict[str, Any], mission_id: str) -> None:
     fields = document.get("fields") or {}
     if (fields.get("mission_id") or {}).get("stringValue") != mission_id:
         raise ProofError(f"Firestore document did not contain the expected mission id {mission_id}")
     if (fields.get("status") or {}).get("stringValue") != "completed":
         raise ProofError(f"Firestore mission {mission_id} is not terminal")
-    return document
+
+
+def _validate_firestore_budget(
+    document: dict[str, Any], expected_git_sha: str, expected_limit: int
+) -> tuple[int, int]:
+    fields = document.get("fields") or {}
+    if (fields.get("kind") or {}).get("stringValue") != "live_mission_budget":
+        raise ProofError("Firestore live budget document has the wrong kind")
+    if (fields.get("budget_id") or {}).get("stringValue") != expected_git_sha:
+        raise ProofError("Firestore live budget is not bound to the deployed Git SHA")
+    try:
+        used = int((fields.get("used") or {})["integerValue"])
+        limit = int((fields.get("limit") or {})["integerValue"])
+    except (KeyError, TypeError, ValueError) as error:
+        raise ProofError("Firestore live budget is missing integer counters") from error
+    if limit != expected_limit or used < 3 or used >= limit:
+        raise ProofError(
+            f"Firestore live budget is inconsistent or has no judging headroom: used={used}, limit={limit}"
+        )
+    return used, limit
 
 
 def _logging_proof(project_id: str, mission_id: str, timeout_seconds: int = 60) -> list[dict[str, Any]]:
@@ -234,6 +260,8 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
         raise ProofError("--base-url must be an HTTPS Cloud Run .run.app URL")
     if not GIT_SHA_RE.fullmatch(args.expected_git_sha):
         raise ProofError("--expected-git-sha must be the full 40-character Git SHA")
+    if args.expected_live_mission_limit != 8:
+        raise ProofError("--expected-live-mission-limit must be exactly 8")
 
     project = _gcloud_json(["projects", "describe", args.project_id])
     if project.get("lifecycleState") != "ACTIVE":
@@ -275,7 +303,7 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
     health_status, health = _request_json(f"{base_url}/healthz")
     if health_status != 200:
         raise ProofError(f"/healthz returned HTTP {health_status}")
-    validate_health(health, args.expected_git_sha)
+    validate_health(health, args.expected_git_sha, args.expected_live_mission_limit)
 
     forged_status, _ = _request_json(f"{base_url}/api/internal/pubsub", method="POST", payload={})
     if forged_status not in {401, 403}:
@@ -301,7 +329,14 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
         raise ProofError("unchanged safe AgentCard did not preserve the stable evidence-set hash")
 
     for mission in (poisoned, safe, safe_recheck):
-        _firestore_document(args.project_id, args.firestore_collection, mission["mission_id"])
+        document = _firestore_document(args.project_id, args.firestore_collection, mission["mission_id"])
+        _validate_firestore_mission(document, mission["mission_id"])
+    budget_document = _firestore_document(
+        args.project_id, args.firestore_collection, f"_live_budget_{args.expected_git_sha}"
+    )
+    budget_used, budget_limit = _validate_firestore_budget(
+        budget_document, args.expected_git_sha, args.expected_live_mission_limit
+    )
     poison_logs = _logging_proof(args.project_id, poisoned["mission_id"])
     safe_logs = _logging_proof(args.project_id, safe["mission_id"])
 
@@ -318,6 +353,8 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
             "queue": health["queue"],
             "model": health["model"],
             "googleAdk": health["googleAdk"],
+            "maxLlmCallsPerMission": health["maxLlmCallsPerMission"],
+            "maxOutputTokensPerCall": health["maxOutputTokensPerCall"],
         },
         "infrastructure": {
             "requiredApisEnabled": True,
@@ -326,6 +363,12 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
             "pubsubOidcVerified": True,
             "forgedPushStatus": forged_status,
             "cloudLoggingEntriesObserved": len(poison_logs) + len(safe_logs),
+            "liveMissionBudget": {
+                "usedAtCapture": budget_used,
+                "limit": budget_limit,
+                "remaining": budget_limit - budget_used,
+                "boundToGitSha": True,
+            },
         },
         "missions": {
             "poisoned": _summarize_mission(poisoned),
@@ -344,6 +387,7 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--service-name", required=True)
     result.add_argument("--runtime-service-account", required=True)
     result.add_argument("--expected-git-sha", required=True)
+    result.add_argument("--expected-live-mission-limit", required=True, type=int)
     result.add_argument("--subscription-name", default="fourproof-missions-push")
     result.add_argument("--firestore-collection", default="fourproof_missions")
     result.add_argument("--timeout-seconds", type=int, default=300)

@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 from typing import Any, Awaitable, Callable
 
+from google.adk.agents import RunConfig
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 
-from .agents import MODEL_ID, build_root_agent
+from .agents import MAX_LLM_CALLS_PER_MISSION, MODEL_ID, build_root_agent
 from .models import MissionEvent, MissionRequest, MissionVerdict
 from .safety import sha256_json
 from .tools import (
@@ -20,6 +21,10 @@ from .tools import (
 
 
 EventSink = Callable[[MissionEvent], Awaitable[None]]
+
+
+def live_run_config() -> RunConfig:
+    return RunConfig(max_llm_calls=MAX_LLM_CALLS_PER_MISSION)
 
 
 def seal_verdict(verdict: MissionVerdict, evidence_sha256: list[str]) -> MissionVerdict:
@@ -150,7 +155,12 @@ async def gemini_adk_run(request: MissionRequest, mission_id: str, emit: EventSi
         )
         message = types.Content(role="user", parts=[types.Part.from_text(text=prompt)])
         final_text = ""
-        async for event in runner.run_async(user_id="public-demo", session_id=mission_id, new_message=message):
+        async for event in runner.run_async(
+            user_id="public-demo",
+            session_id=mission_id,
+            new_message=message,
+            run_config=live_run_config(),
+        ):
             if event.is_final_response() and event.content and event.content.parts:
                 final_text = "".join(part.text or "" for part in event.content.parts)
         session = await runner.session_service.get_session(

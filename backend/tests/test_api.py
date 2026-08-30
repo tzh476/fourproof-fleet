@@ -1,9 +1,14 @@
+import asyncio
+
 import httpx
+import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from app.fixtures import POISONED_AGENT_CARD
-from app.main import app, live_target_allowed, public_runtime_error
+from app.main import app, live_target_allowed, mission_windows, public_runtime_error, reserve_mission_budget
 from app.safety import sha256_json
+from app.store import InMemoryMissionStore
 
 
 client = TestClient(app)
@@ -16,6 +21,9 @@ def test_health_discloses_when_gemini_is_not_configured() -> None:
     assert payload["model"] == "gemini-3.5-flash"
     assert payload["googleAdk"] == "2.8.0"
     assert payload["geminiConfigured"] is False
+    assert payload["liveMissionTotalLimit"] == 0
+    assert payload["maxLlmCallsPerMission"] == 8
+    assert payload["maxOutputTokensPerCall"] == 2_048
 
 
 def test_poisoned_demo_is_quarantined_with_receipt() -> None:
@@ -50,6 +58,24 @@ def test_live_target_fails_closed_without_gemini_credentials() -> None:
         },
     )
     assert response.status_code == 503
+
+
+def test_live_total_budget_blocks_model_work_but_not_explicit_fixtures(monkeypatch) -> None:
+    monkeypatch.setenv("MISSION_LIMIT_PER_HOUR", "20")
+    monkeypatch.setenv("LIVE_MISSION_TOTAL_LIMIT", "2")
+    monkeypatch.setenv("APP_GIT_SHA", "budget-test-commit")
+    mission_windows["live"].clear()
+    mission_windows["fixture"].clear()
+
+    async def scenario() -> None:
+        store = InMemoryMissionStore()
+        await reserve_mission_budget(store, uses_gemini=True)
+        await reserve_mission_budget(store, uses_gemini=True)
+        with pytest.raises(HTTPException, match="exhausted its total live Gemini mission budget"):
+            await reserve_mission_budget(store, uses_gemini=True)
+        await reserve_mission_budget(store, uses_gemini=False)
+
+    asyncio.run(scenario())
 
 
 def test_explicit_demo_never_masquerades_as_gemini_when_key_exists(monkeypatch) -> None:

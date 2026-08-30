@@ -17,6 +17,9 @@ class MissionStore(ABC):
     async def get(self, mission_id: str) -> MissionRecord | None: ...
 
     @abstractmethod
+    async def reserve_live_budget(self, budget_id: str, limit: int) -> int | None: ...
+
+    @abstractmethod
     async def claim(self, mission_id: str, *, lease_seconds: int = 360) -> bool: ...
 
     @abstractmethod
@@ -32,6 +35,7 @@ class MissionStore(ABC):
 class InMemoryMissionStore(MissionStore):
     def __init__(self) -> None:
         self._records: dict[str, MissionRecord] = {}
+        self._live_budgets: dict[str, int] = {}
         self._lock = asyncio.Lock()
 
     async def create(self, record: MissionRecord) -> MissionRecord:
@@ -43,6 +47,15 @@ class InMemoryMissionStore(MissionStore):
         async with self._lock:
             record = self._records.get(mission_id)
             return record.model_copy(deep=True) if record else None
+
+    async def reserve_live_budget(self, budget_id: str, limit: int) -> int | None:
+        async with self._lock:
+            used = self._live_budgets.get(budget_id, 0)
+            if used >= limit:
+                return None
+            used += 1
+            self._live_budgets[budget_id] = used
+            return used
 
     async def claim(self, mission_id: str, *, lease_seconds: int = 360) -> bool:
         async with self._lock:
@@ -104,6 +117,32 @@ class FirestoreMissionStore(MissionStore):
     async def get(self, mission_id: str) -> MissionRecord | None:
         snapshot = await self._collection.document(mission_id).get()
         return MissionRecord.model_validate(snapshot.to_dict()) if snapshot.exists else None
+
+    async def reserve_live_budget(self, budget_id: str, limit: int) -> int | None:
+        document = self._collection.document(f"_live_budget_{budget_id}")
+        transaction = self._client.transaction()
+
+        @self._firestore.async_transactional
+        async def reserve_in_transaction(current_transaction) -> int | None:
+            snapshot = await document.get(transaction=current_transaction)
+            state = snapshot.to_dict() if snapshot.exists else {}
+            used = int((state or {}).get("used", 0))
+            if used >= limit:
+                return None
+            used += 1
+            current_transaction.set(
+                document,
+                {
+                    "kind": "live_mission_budget",
+                    "budget_id": budget_id,
+                    "used": used,
+                    "limit": limit,
+                    "updated_at": utc_now(),
+                },
+            )
+            return used
+
+        return await reserve_in_transaction(transaction)
 
     async def claim(self, mission_id: str, *, lease_seconds: int = 360) -> bool:
         document = self._collection.document(mission_id)

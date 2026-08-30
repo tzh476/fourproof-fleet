@@ -7,6 +7,7 @@ required_vars=(
   FOURPROOF_SERVICE_NAME
   FOURPROOF_RUNTIME_SA
   FOURPROOF_HARD_COST_CAP_USD
+  FOURPROOF_MAX_LIVE_MISSIONS
 )
 
 for var_name in "${required_vars[@]}"; do
@@ -35,6 +36,7 @@ region="${FOURPROOF_REGION}"
 service_name="${FOURPROOF_SERVICE_NAME}"
 runtime_sa_name="${FOURPROOF_RUNTIME_SA}"
 hard_cost_cap_usd="${FOURPROOF_HARD_COST_CAP_USD}"
+max_live_missions="${FOURPROOF_MAX_LIVE_MISSIONS}"
 runtime_sa_email="${runtime_sa_name}@${project_id}.iam.gserviceaccount.com"
 topic_name="${FOURPROOF_PUBSUB_TOPIC:-fourproof-missions}"
 subscription_name="${FOURPROOF_PUBSUB_SUBSCRIPTION:-fourproof-missions-push}"
@@ -63,8 +65,17 @@ if [[ ! "${runtime_sa_name}" =~ ^[a-z][a-z0-9-]{4,28}[a-z0-9]$ ]]; then
   exit 9
 fi
 if [[ ! "${hard_cost_cap_usd}" =~ ^[1-9][0-9]*([.][0-9]{1,2})?$ ]]; then
-  echo "FOURPROOF_HARD_COST_CAP_USD must be the applicant-approved USD ceiling of at least 1.00." >&2
+  echo "FOURPROOF_HARD_COST_CAP_USD must be the applicant-approved USD ceiling." >&2
   exit 13
+fi
+hard_cost_whole="${hard_cost_cap_usd%%.*}"
+if (( 10#${hard_cost_whole} < 5 )); then
+  echo "FOURPROOF_HARD_COST_CAP_USD must be at least 5.00 for the documented conservative deployment envelope." >&2
+  exit 15
+fi
+if [[ "${max_live_missions}" != "8" ]]; then
+  echo "FOURPROOF_MAX_LIVE_MISSIONS must be exactly 8 for the documented proof and recording envelope." >&2
+  exit 14
 fi
 for resource_name in "${topic_name}" "${subscription_name}" "${firestore_location}"; do
   if [[ ! "${resource_name}" =~ ^[A-Za-z0-9._-]+$ ]]; then
@@ -90,6 +101,8 @@ echo "Region: ${region}"
 echo "Service: ${service_name}"
 echo "Git commit: ${git_sha}"
 echo "Applicant-authorized cost ceiling: USD ${hard_cost_cap_usd} (authorization limit, not an automatic billing stop)"
+echo "Per-revision Gemini mission ceiling: ${max_live_missions}"
+echo "Per-mission Gemini ceiling: 8 model calls, 2048 output tokens per call"
 echo "This operation creates or changes billable Google Cloud resources and IAM bindings."
 echo "Continue only after the applicant has reviewed the account, project, billing, and cost boundary."
 
@@ -156,7 +169,7 @@ gcloud run deploy "${service_name}" \
   --cpu=1 \
   --memory=1Gi \
   --timeout=300 \
-  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=${project_id},GOOGLE_CLOUD_LOCATION=global,FIRESTORE_ENABLED=1,FIRESTORE_COLLECTION=fourproof_missions,PUBSUB_TOPIC=${topic_name},PUBSUB_SERVICE_ACCOUNT_EMAIL=${runtime_sa_email},APP_GIT_SHA=${git_sha}" \
+  --set-env-vars="GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=${project_id},GOOGLE_CLOUD_LOCATION=global,FIRESTORE_ENABLED=1,FIRESTORE_COLLECTION=fourproof_missions,PUBSUB_TOPIC=${topic_name},PUBSUB_SERVICE_ACCOUNT_EMAIL=${runtime_sa_email},APP_GIT_SHA=${git_sha},LIVE_MISSION_TOTAL_LIMIT=${max_live_missions},MISSION_LIMIT_PER_HOUR=${max_live_missions}" \
   --project="${project_id}"
 
 service_url="$(gcloud run services describe "${service_name}" --region="${region}" --project="${project_id}" --format='value(status.url)')"
@@ -170,7 +183,7 @@ gcloud run services add-iam-policy-binding "${service_name}" \
 
 gcloud run services update "${service_name}" \
   --region="${region}" \
-  --update-env-vars="PUBSUB_AUDIENCE=${service_url},ALLOWED_LIVE_HOSTS=${service_host},MISSION_LIMIT_PER_HOUR=8" \
+  --update-env-vars="PUBSUB_AUDIENCE=${service_url},ALLOWED_LIVE_HOSTS=${service_host}" \
   --project="${project_id}"
 
 push_endpoint="${service_url}/api/internal/pubsub"

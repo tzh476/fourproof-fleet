@@ -10,7 +10,7 @@ Show the hero and the three policy outcomes.
 
 ## 0:25-0:55 — Architecture
 
-“An operator submits one AgentCard. Cloud Run accepts the mission, Firestore stores its durable state, and Pub/Sub triggers an authenticated worker. A Google ADK workflow fans out to Registry Scout, Identity Verifier, and Tool Guard. Gemini 3.5 Flash produces typed reports, then Policy Judge fans them back in. The result is sealed to a canonical SHA-256 receipt.”
+“An operator submits one AgentCard. Cloud Run accepts the mission, Firestore stores its durable state and atomically reserves a Git-bound live budget, and Pub/Sub triggers an authenticated worker. A Google ADK workflow fans out to Registry Scout, Identity Verifier, and Tool Guard. Gemini 3.5 Flash produces typed reports, then Policy Judge fans them back in. Every mission is capped at eight model calls and 2,048 output tokens per call. The result is sealed to a canonical SHA-256 receipt.”
 
 Show `docs/architecture.svg`, then `/healthz` with `[MODEL]`, `google-adk`, `firestore`, `pubsub`, and `cloud_run` visible.
 
@@ -32,9 +32,9 @@ Select **Live safe**. It submits `[CLOUD_RUN_URL]/agentcards/safe.json` without 
 
 ## 2:40-3:15 — Cloud and recovery proof
 
-“The worker is decoupled through Pub/Sub with Google OIDC audience and service-account verification. Firestore keeps the event stream across Cloud Run instances. Duplicate terminal deliveries are idempotent, failures are explicit, and scale-to-zero plus a bounded maximum controls cost.”
+“The worker is decoupled through Pub/Sub with Google OIDC audience and service-account verification. Firestore keeps the event stream and an atomic per-revision Gemini mission counter across Cloud Run instances. Duplicate terminal deliveries are idempotent, failures are explicit, and scale-to-zero plus one maximum instance limits infrastructure exposure.”
 
-Show the Cloud Run revision, Pub/Sub authenticated push configuration, and Firestore mission sequence. Do not expose account, token, project-secret, or billing details.
+Show the Cloud Run revision, Pub/Sub authenticated push configuration, Firestore mission sequence, and `_live_budget_<git-sha>` counter. Do not expose account, token, project-secret, or billing details. Do not call a Google budget alert a hard stop.
 
 Trigger one linked recheck for the safe mission and show `previous_mission_id`, `next_review_at`, and the unchanged evidence-set hash when the underlying AgentCard bytes are unchanged. The decision receipt is run-specific and may change when Gemini's typed explanation changes; do not claim deterministic model wording.
 

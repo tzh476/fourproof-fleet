@@ -1,6 +1,6 @@
-from app.agents import MODEL_ID, build_root_agent
+from app.agents import MAX_LLM_CALLS_PER_MISSION, MAX_OUTPUT_TOKENS_PER_CALL, MODEL_ID, build_root_agent
 from app.models import MissionVerdict
-from app.orchestrator import enforce_runtime_policy, seal_verdict
+from app.orchestrator import enforce_runtime_policy, live_run_config, seal_verdict
 
 
 def test_adk_workflow_graph_has_parallel_specialists_and_final_judge() -> None:
@@ -18,6 +18,10 @@ def test_adk_workflow_graph_has_parallel_specialists_and_final_judge() -> None:
     judge = agents["policy_judge"]
     assert "{scout_report}" not in judge.instruction
     assert [getattr(tool, "name", tool.__name__) for tool in judge.tools] == ["read_specialist_reports"]
+    assert MAX_LLM_CALLS_PER_MISSION == 8
+    assert MAX_OUTPUT_TOKENS_PER_CALL == 2_048
+    assert all(agent.generate_content_config.max_output_tokens == 2_048 for agent in agents.values())
+    assert live_run_config().max_llm_calls == 8
 
 
 def test_runtime_policy_overrides_model_allow_when_guard_has_injection() -> None:

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">FourProof Fleet architecture</title>
-  <desc id="desc">A zero-trust agent onboarding workflow on Google Cloud with Cloud Run, Firestore, Pub/Sub, Google ADK, Gemini 3.5 Flash, three parallel reviewers, a policy judge, and a SHA-256 evidence receipt.</desc>
+  <desc id="desc">A zero-trust agent onboarding workflow on Google Cloud with Cloud Run, Firestore, Pub/Sub, Google ADK, Gemini 3.5 Flash, three parallel reviewers, a Git-bound live budget, a policy judge, and a SHA-256 evidence receipt.</desc>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07140f"/>
@@ -50,13 +50,14 @@
   </g>
 
   <g filter="url(#shadow)">
-    <rect x="372" y="246" width="244" height="210" rx="24" class="box2"/>
+    <rect x="372" y="236" width="244" height="230" rx="24" class="box2"/>
     <text x="400" y="283" class="micro">GOOGLE CLOUD</text>
     <text x="400" y="326" class="label">Cloud Run API</text>
     <text x="400" y="354" class="small">FastAPI + React</text>
     <line x1="400" y1="376" x2="586" y2="376" stroke="#315a46"/>
     <text x="400" y="404" class="small">URL / DNS boundary</text>
     <text x="400" y="430" class="small">256 KB • no redirects</text>
+    <text x="400" y="454" class="small">8 runs • 8 calls/run</text>
   </g>
 
   <path d="M290 351 H363" class="flow"/>
@@ -97,7 +98,7 @@
     <rect x="1360" y="254" width="174" height="124" rx="21" class="box"/>
     <text x="1384" y="290" class="micro">FIRESTORE</text>
     <text x="1384" y="326" class="label">Durable state</text>
-    <text x="1384" y="352" class="small">events + verdict</text>
+    <text x="1384" y="352" class="small">events + Git budget</text>
 
     <rect x="1360" y="414" width="174" height="124" rx="21" class="box"/>
     <text x="1384" y="450" class="micro">PUB/SUB + OIDC</text>

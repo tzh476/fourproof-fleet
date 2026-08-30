@@ -24,6 +24,27 @@ def test_concurrent_delivery_gets_one_execution_lease() -> None:
     assert stored.lease_expires_at is not None
 
 
+def test_concurrent_live_budget_reservations_never_exceed_revision_limit() -> None:
+    async def scenario() -> list[int | None]:
+        store = InMemoryMissionStore()
+        return await asyncio.gather(*(store.reserve_live_budget("commit-a", 3) for _ in range(8)))
+
+    reservations = asyncio.run(scenario())
+    assert sorted(value for value in reservations if value is not None) == [1, 2, 3]
+    assert reservations.count(None) == 5
+
+
+def test_live_budget_is_isolated_by_git_revision() -> None:
+    async def scenario() -> tuple[int | None, int | None, int | None]:
+        store = InMemoryMissionStore()
+        first = await store.reserve_live_budget("commit-a", 1)
+        exhausted = await store.reserve_live_budget("commit-a", 1)
+        next_revision = await store.reserve_live_budget("commit-b", 1)
+        return first, exhausted, next_revision
+
+    assert asyncio.run(scenario()) == (1, None, 1)
+
+
 def test_pubsub_short_topic_is_qualified_with_project(monkeypatch) -> None:
     monkeypatch.setenv("PUBSUB_TOPIC", "fourproof-missions")
     monkeypatch.setenv("GOOGLE_CLOUD_PROJECT", "fleet-demo-project")

@@ -17,8 +17,10 @@ Do not claim Google Cloud execution until every applicable item has direct evide
 - [ ] `/healthz` `gitSha` exactly matches the public repository's final commit.
 - [ ] `/healthz` reports `runtime=google-cloud-run`, `store=firestore`, `queue=pubsub`, `geminiConfigured=true`.
 - [ ] The model shown by `/healthz` is exactly `gemini-3.5-flash` and the framework is Google ADK.
+- [ ] `/healthz` reports the applicant-approved total live-mission limit, exactly 8 LLM calls per mission, and 2,048 output tokens per call.
 - [ ] A non-fixture mission finishes with `engine=gemini_adk`; deterministic output does not count.
 - [ ] Firestore contains the queued, running, and terminal events for the demonstrated mission.
+- [ ] Firestore contains `_live_budget_<git-sha>` with the exact Git SHA, configured limit, observed use, and at least one remaining mission for judging.
 - [ ] Pub/Sub delivery uses authenticated OIDC and the configured audience/service-account binding.
 - [ ] The completed mission survives a new Cloud Run instance or restart.
 - [ ] Cloud Logging shows the same mission id without exposed input secrets.
@@ -34,6 +36,7 @@ Do not claim Google Cloud execution until every applicable item has direct evide
 ## Cost and operations
 
 - [ ] Cloud Run min instances is zero and max instances is bounded.
+- [ ] `docs/cost-boundary.md` was reviewed against current official prices; the approved proof ceiling is at least USD 5 and is not represented as an automatic provider hard stop.
 - [ ] Firestore and Pub/Sub usage are inspected after the demo.
 - [ ] A budget alert or explicit cleanup plan exists.
 - [ ] Temporary resources are removed after judging if they are no longer required.

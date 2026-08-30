@@ -1,6 +1,12 @@
 import pytest
 
-from scripts.live_proof import ProofError, canonical_sha256, validate_health, validate_mission
+from scripts.live_proof import (
+    ProofError,
+    _validate_firestore_budget,
+    canonical_sha256,
+    validate_health,
+    validate_mission,
+)
 
 
 def healthy_runtime() -> dict:
@@ -14,6 +20,9 @@ def healthy_runtime() -> dict:
         "googleAdk": "2.8.0",
         "liveTargetPolicy": "allowlist",
         "gitSha": "a" * 40,
+        "liveMissionTotalLimit": 8,
+        "maxLlmCallsPerMission": 8,
+        "maxOutputTokensPerCall": 2_048,
     }
 
 
@@ -43,7 +52,7 @@ def live_mission(case: str) -> dict:
 
 
 def test_live_proof_accepts_exact_cloud_health_and_two_counterexamples() -> None:
-    validate_health(healthy_runtime(), "a" * 40)
+    validate_health(healthy_runtime(), "a" * 40, 8)
     validate_mission(live_mission("poisoned"), "poisoned")
     validate_mission(live_mission("safe"), "safe")
 
@@ -53,7 +62,7 @@ def test_live_proof_rejects_local_or_unversioned_runtime() -> None:
     payload["runtime"] = "local"
     payload["gitSha"] = "uncommitted-local"
     with pytest.raises(ProofError, match="expected runtime"):
-        validate_health(payload, "a" * 40)
+        validate_health(payload, "a" * 40, 8)
 
 
 def test_live_proof_rejects_deterministic_fixture_masquerading_as_gemini() -> None:
@@ -69,3 +78,28 @@ def test_live_proof_recomputes_the_stable_evidence_set_hash() -> None:
     record["verdict"]["evidence_set_sha256"] = "d" * 64
     with pytest.raises(ProofError, match="not reproducible"):
         validate_mission(record, "safe")
+
+
+def test_live_proof_accepts_revision_bound_budget_with_judging_headroom() -> None:
+    document = {
+        "fields": {
+            "kind": {"stringValue": "live_mission_budget"},
+            "budget_id": {"stringValue": "a" * 40},
+            "used": {"integerValue": "3"},
+            "limit": {"integerValue": "8"},
+        }
+    }
+    assert _validate_firestore_budget(document, "a" * 40, 8) == (3, 8)
+
+
+def test_live_proof_rejects_exhausted_budget_without_judging_headroom() -> None:
+    document = {
+        "fields": {
+            "kind": {"stringValue": "live_mission_budget"},
+            "budget_id": {"stringValue": "a" * 40},
+            "used": {"integerValue": "8"},
+            "limit": {"integerValue": "8"},
+        }
+    }
+    with pytest.raises(ProofError, match="no judging headroom"):
+        _validate_firestore_budget(document, "a" * 40, 8)

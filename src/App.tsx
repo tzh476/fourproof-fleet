@@ -20,6 +20,9 @@ interface HealthRecord {
   queue: string;
   runtime: string;
   gitSha: string;
+  liveMissionTotalLimit: number;
+  maxLlmCallsPerMission: number;
+  maxOutputTokensPerCall: number;
 }
 
 interface MissionEvent {
@@ -390,6 +393,9 @@ function MissionLab() {
             <div><dt>queue</dt><dd>{health.queue}</dd></div>
             <div><dt>gemini</dt><dd>{health.geminiConfigured ? "configured" : "not configured"}</dd></div>
             <div><dt>commit</dt><dd>{health.gitSha.slice(0, 12)}</dd></div>
+            <div><dt>live cap</dt><dd>{health.liveMissionTotalLimit || "not set"}</dd></div>
+            <div><dt>LLM calls / run</dt><dd>{health.maxLlmCallsPerMission}</dd></div>
+            <div><dt>output cap / call</dt><dd>{health.maxOutputTokensPerCall.toLocaleString()} tok</dd></div>
           </dl>
         )}
       </div>

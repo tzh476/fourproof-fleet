@@ -36,7 +36,7 @@ A Policy Judge combines the typed reports and returns only one of three bounded 
 
 The backend is FastAPI on Cloud Run. Mission state and event history live in Firestore. Pub/Sub decouples intake from execution and authenticates push deliveries with Google OIDC. Google ADK 2.8 defines a fan-out/fan-in `Workflow`: Registry Scout, Identity Verifier, and Tool Guard run concurrently, then Policy Judge runs after all three complete. Gemini 3.5 Flash (`gemini-3.5-flash`) powers typed specialist reports and the policy decision. ADK's OpenTelemetry instrumentation and secret-free structured Cloud Logging events share the mission id for end-to-end correlation.
 
-The security boundary validates URL schemes and credentials, resolves DNS, rejects private and reserved destinations, disables redirects, caps responses at 256 KB, and never sends target content a secret or production tool. Model outputs are validated with Pydantic. Uncaught errors become explicit failed missions rather than activation decisions.
+The security boundary validates URL schemes and credentials, resolves DNS, rejects private and reserved destinations, disables redirects, caps responses at 256 KB, and never sends target content a secret or production tool. Model outputs are validated with Pydantic. Real Gemini missions are transactionally capped per deployed Git SHA, each mission allows at most eight model calls, and each call allows at most 2,048 output tokens. Uncaught errors become explicit failed missions rather than activation decisions.
 
 The React/Vite frontend also includes read-only BSC ERC-8004 identity discovery across four categories. The live registry is context; its metadata is never treated as proof of enterprise safety.
 
@@ -51,6 +51,7 @@ The hardest design problem was preventing the reviewer from becoming the attack 
 - Stable exact-evidence hashing plus run-specific decision receipts.
 - An authenticated Pub/Sub/Cloud Run boundary with durable Firestore events.
 - Explicit runtime disclosure: deterministic fixtures cannot masquerade as Gemini or Google Cloud execution.
+- A durable, Git-bound live mission budget plus per-run model-call and output-token ceilings.
 - Adversarial tests for prompt injection, SSRF, forged queue delivery, duplicate execution, and benign-but-unverified agents.
 
 ## What we learned

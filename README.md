@@ -52,7 +52,7 @@ No Gemini or Google Cloud execution is claimed when credentials are absent. The 
 - Pub/Sub execution requests require Google-issued OIDC plus an exact service-account email and audience match.
 - A code-level policy guard overrides any model attempt to allow an agent with injection, blocked endpoints, contradictory identity, or incomplete evidence.
 - One immutable AgentCard snapshot is shared across all parallel reviewers, and its hash is part of the final receipt.
-- The public deployment restricts live reviews to its controlled AgentCard host, caps missions per instance and hour, and bounds Cloud Run instances.
+- The public deployment restricts live reviews to its controlled AgentCard host, atomically caps real Gemini missions per Git revision in Firestore, limits each mission to eight model calls and 2,048 output tokens per call, and bounds Cloud Run to one instance.
 - Missing evidence produces human review or quarantine, never optimistic activation.
 
 See [docs/threat-model.md](docs/threat-model.md) for attack cases and residual risks.
@@ -120,11 +120,12 @@ export FOURPROOF_REGION="us-central1"
 export FOURPROOF_SERVICE_NAME="fourproof-fleet"
 export FOURPROOF_RUNTIME_SA="fourproof-fleet-runtime"
 export FOURPROOF_HARD_COST_CAP_USD="your-approved-maximum"
+export FOURPROOF_MAX_LIVE_MISSIONS="8"
 export FOURPROOF_BILLABLE_ACTION_ACK="I_CONFIRM_USER_AUTHORIZED_BILLABLE_GCP_CHANGES"
 npm run deploy:gcp
 ```
 
-`FOURPROOF_HARD_COST_CAP_USD` records the applicant's authorization ceiling; Google Cloud billing does not provide a guaranteed automatic hard stop at that value. The script also bounds Cloud Run to one instance and the app to eight mission starts per instance-hour. Do not set the acknowledgement unless the project owner has confirmed the exact project and cost boundary for that deployment attempt. The deployment stays private by default. Only after separate action-time authorization to publish the hosted demo, set:
+`FOURPROOF_HARD_COST_CAP_USD` records the applicant's authorization ceiling and must be at least USD 5 for the documented proof workload; Google Cloud billing does not provide a guaranteed automatic hard stop at that value. `FOURPROOF_MAX_LIVE_MISSIONS` must be exactly 8 and adds a Firestore-transactional, per-Git-revision ceiling for real Gemini missions. Each mission is separately bounded to eight model calls and 2,048 output tokens per call, while Cloud Run stays at one maximum instance. Review the calculation and important public-hosting caveat in [docs/cost-boundary.md](docs/cost-boundary.md). Do not set the acknowledgement unless the project owner has confirmed the exact project and cost boundary for that deployment attempt. The deployment stays private by default. Only after separate action-time authorization to publish the hosted demo, set:
 
 ```bash
 export FOURPROOF_PUBLIC_DEMO_ACK="I_CONFIRM_USER_AUTHORIZED_PUBLIC_CLOUD_RUN_DEMO"
@@ -145,6 +146,7 @@ python3 scripts/live_proof.py \
   --service-name="${FOURPROOF_SERVICE_NAME}" \
   --runtime-service-account="${FOURPROOF_RUNTIME_SA}@${FOURPROOF_PROJECT_ID}.iam.gserviceaccount.com" \
   --expected-git-sha="$(git rev-parse HEAD)" \
+  --expected-live-mission-limit="${FOURPROOF_MAX_LIVE_MISSIONS}" \
   --output="docs/live-gcp-proof.json"
 ```
 
@@ -156,6 +158,7 @@ python3 scripts/live_proof.py \
 - [architecture source](docs/architecture.svg) and [1600×900 PNG](docs/architecture.png)
 - [1600×900 cover image](docs/cover.png)
 - [threat model](docs/threat-model.md) and [live cloud proof checklist](docs/cloud-proof-checklist.md)
+- [official Google Cloud cost model and deployment gates](docs/cost-boundary.md)
 - [continuous recording runbook](docs/recording-runbook.md)
 - [official rules evidence and applicant-owned gates](docs/official-gates.md)
 

@@ -2,12 +2,19 @@ from __future__ import annotations
 
 from google.adk.agents import Agent
 from google.adk.workflow import START, Workflow
+from google.genai import types
 
 from .models import GuardReport, IdentityReport, MissionVerdict, ScoutReport
 from .tools import inspect_registry_claim, inspect_tool_boundary, read_specialist_reports, summarize_card
 
 
 MODEL_ID = "gemini-3.5-flash"
+MAX_LLM_CALLS_PER_MISSION = 8
+MAX_OUTPUT_TOKENS_PER_CALL = 2_048
+
+
+def bounded_generation_config() -> types.GenerateContentConfig:
+    return types.GenerateContentConfig(max_output_tokens=MAX_OUTPUT_TOKENS_PER_CALL)
 
 
 def build_root_agent(model: str = MODEL_ID) -> Workflow:
@@ -21,6 +28,7 @@ def build_root_agent(model: str = MODEL_ID) -> Workflow:
             "Create evidence id scout-card and include the observed source and SHA-256 returned by the tool."
         ),
         tools=[summarize_card],
+        generate_content_config=bounded_generation_config(),
         output_schema=ScoutReport,
         output_key="scout_report",
     )
@@ -34,6 +42,7 @@ def build_root_agent(model: str = MODEL_ID) -> Workflow:
             "id identity-claim and preserve contradictions and the source SHA-256."
         ),
         tools=[inspect_registry_claim],
+        generate_content_config=bounded_generation_config(),
         output_schema=IdentityReport,
         output_key="identity_report",
     )
@@ -47,6 +56,7 @@ def build_root_agent(model: str = MODEL_ID) -> Workflow:
             "create evidence id guard-scan with the returned SHA-256."
         ),
         tools=[inspect_tool_boundary],
+        generate_content_config=bounded_generation_config(),
         output_schema=GuardReport,
         output_key="guard_report",
     )
@@ -64,6 +74,7 @@ def build_root_agent(model: str = MODEL_ID) -> Workflow:
             "MissionVerdict schema. Leave receipt_sha256 empty; the runtime seals it after validation."
         ),
         tools=[read_specialist_reports],
+        generate_content_config=bounded_generation_config(),
         output_schema=MissionVerdict,
         output_key="mission_verdict",
     )

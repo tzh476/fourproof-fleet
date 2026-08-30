@@ -5,7 +5,7 @@ Source: [official All Things Agentic overview and judging criteria](https://allt
 | Official criterion | Weight | Current evidence | Current score | Submission gate |
 |---|---:|---|---:|---|
 | Innovation & Operational Utility | 40 | Unlikely hero is an AI fleet librarian outside the security team; specific enterprise onboarding gate; real catalog context; parallel autonomous evidence collection; code-enforced quarantine; canonical receipt | 33/40 | Show two non-fixture Gemini missions and a linked re-review across durable state |
-| Architectural Discipline & Tech Stack | 30 | Google ADK fan-out/fan-in; one immutable evidence snapshot; stable evidence-set hash; run-specific decision receipt; Firestore transaction lease; Pub/Sub OIDC; SSRF/prompt-injection boundary; explicit failures; 37 backend tests | 27/30 | Prove the same graph, store, queue, lease, and failure behavior on Google Cloud |
+| Architectural Discipline & Tech Stack | 30 | Google ADK fan-out/fan-in; one immutable evidence snapshot; stable evidence-set hash; run-specific decision receipt; Firestore transaction lease plus Git-bound spend counter; 8-call/2,048-output-token ceilings; Pub/Sub OIDC; SSRF/prompt-injection boundary; explicit failures; 42 backend tests | 27/30 | Prove the same graph, store, queue, lease, budget, and failure behavior on Google Cloud |
 | Demo & Production Readiness | 30 | Polished responsive UI; architecture SVG/PNG; reproducible setup; 3:35 script; deterministic local proof | 13/30 | Record a continuous real Cloud Run/Vertex AI/Firestore/Pub/Sub demo and publish it |
 | **Total** | **100** | **Strong local candidate; cloud proof is the critical path** | **73/100** | **Do not submit below 88/100** |
 
@@ -15,8 +15,9 @@ Source: [official All Things Agentic overview and judging criteria](https://allt
 2. **Live poisoned** uses the deployed JSON URL with no `demo_case`, returns `engine=gemini_adk`, and is forced to quarantine by both model evidence and runtime policy.
 3. **Live safe** proves the counterexample: benign content with self-declared identity cannot become production activation.
 4. Firestore shows queued → running → completed events, attempt count, lease, evidence hash, and receipt for the same mission id shown in the UI.
-5. A duplicate or forged Pub/Sub request is rejected or idempotently acknowledged without a second execution.
-6. `/healthz` Git SHA, the public repo commit, Cloud Run revision, diagram, submission text, and video all describe the same architecture.
+5. Firestore shows the atomic live budget document bound to the exact deployed Git SHA, while `/healthz` proves the per-mission call/output ceilings.
+6. A duplicate or forged Pub/Sub request is rejected or idempotently acknowledged without a second execution.
+7. `/healthz` Git SHA, the public repo commit, Cloud Run revision, diagram, submission text, and video all describe the same architecture.
 
 ## Top-five blockers, in order
 
