@@ -67,7 +67,7 @@ def validate_health(payload: dict[str, Any], expected_git_sha: str, expected_liv
         if payload.get(key) != value
     }
     if mismatches:
-        raise ProofError(f"/healthz did not prove the expected runtime: {json.dumps(mismatches, sort_keys=True)}")
+        raise ProofError(f"/health did not prove the expected runtime: {json.dumps(mismatches, sort_keys=True)}")
 
 
 def validate_mission(record: dict[str, Any], case: str) -> None:
@@ -300,9 +300,9 @@ def capture(args: argparse.Namespace) -> dict[str, Any]:
     if oidc.get("audience") != base_url or oidc.get("serviceAccountEmail") != args.runtime_service_account:
         raise ProofError("Pub/Sub OIDC audience or service account does not match the deployment")
 
-    health_status, health = _request_json(f"{base_url}/healthz")
+    health_status, health = _request_json(f"{base_url}/health")
     if health_status != 200:
-        raise ProofError(f"/healthz returned HTTP {health_status}")
+        raise ProofError(f"/health returned HTTP {health_status}")
     validate_health(health, args.expected_git_sha, args.expected_live_mission_limit)
 
     forged_status, _ = _request_json(f"{base_url}/api/internal/pubsub", method="POST", payload={})

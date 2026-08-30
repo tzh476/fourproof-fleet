@@ -160,8 +160,11 @@ async def run_mission(mission_id: str, request: MissionRequest, store: MissionSt
     return True
 
 
+# Cloud Run reserves some URL paths ending in "z". Keep /healthz for local
+# compatibility, but use /health for deployed probes and judging evidence.
+@app.get("/health")
 @app.get("/healthz")
-async def healthz() -> dict[str, object]:
+async def health() -> dict[str, object]:
     return {
         "ok": True,
         "service": "fourproof-fleet",

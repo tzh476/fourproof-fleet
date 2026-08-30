@@ -39,7 +39,9 @@ START ─┬─> Registry Scout ───┐
 - **Cloud Logging** receives structured Cloud Run runtime logs.
 - **ADK OpenTelemetry instrumentation** creates spans around agent execution; the application also emits secret-free structured mission-stage logs correlated by mission id.
 
-No Gemini or Google Cloud execution is claimed when credentials are absent. The public UI exposes `geminiConfigured`, runtime, store, queue, model, and framework through `/healthz`. Deterministic fixtures are labeled `deterministic_demo` and never represented as model output.
+No Gemini or Google Cloud execution is claimed when credentials are absent. The public UI exposes `geminiConfigured`, runtime, store, queue, model, and framework through `/health`. Deterministic fixtures are labeled `deterministic_demo` and never represented as model output.
+
+Deployed probes use `/health` because Cloud Run reserves some URL paths ending in `z`; `/healthz` remains a local compatibility alias only.
 
 ## Security boundary
 

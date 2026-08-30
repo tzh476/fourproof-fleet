@@ -11,13 +11,13 @@ Source: [official All Things Agentic overview and judging criteria](https://allt
 
 ## Evidence that can raise the score
 
-1. `/healthz` visibly reports `google-cloud-run`, `firestore`, `pubsub`, Gemini configured, model `gemini-3.5-flash`, and ADK 2.8.0.
+1. `/health` visibly reports `google-cloud-run`, `firestore`, `pubsub`, Gemini configured, model `gemini-3.5-flash`, and ADK 2.8.0.
 2. **Live poisoned** uses the deployed JSON URL with no `demo_case`, returns `engine=gemini_adk`, and is forced to quarantine by both model evidence and runtime policy.
 3. **Live safe** proves the counterexample: benign content with self-declared identity cannot become production activation.
 4. Firestore shows queued → running → completed events, attempt count, lease, evidence hash, and receipt for the same mission id shown in the UI.
-5. Firestore shows the atomic live budget document bound to the exact deployed Git SHA, while `/healthz` proves the per-mission call/output ceilings.
+5. Firestore shows the atomic live budget document bound to the exact deployed Git SHA, while `/health` proves the per-mission call/output ceilings.
 6. A duplicate or forged Pub/Sub request is rejected or idempotently acknowledged without a second execution.
-7. `/healthz` Git SHA, the public repo commit, Cloud Run revision, diagram, submission text, and video all describe the same architecture.
+7. `/health` Git SHA, the public repo commit, Cloud Run revision, diagram, submission text, and video all describe the same architecture.
 
 ## Top-five blockers, in order
 

@@ -311,7 +311,7 @@ function MissionLab() {
   const [missionError, setMissionError] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetch(`${apiBase}/healthz`)
+    void fetch(`${apiBase}/health`)
       .then((response) => response.ok ? response.json() as Promise<HealthRecord> : Promise.reject(new Error("health unavailable")))
       .then(setHealth)
       .catch(() => setHealth(null));

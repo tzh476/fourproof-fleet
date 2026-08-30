@@ -5,14 +5,14 @@ Leave a field `UNVERIFIED` until it is observed directly. Never copy expected va
 | Check | Observed value | Evidence/time |
 |---|---|---|
 | Final Git commit | UNVERIFIED | UNVERIFIED |
-| `/healthz` Git SHA match | UNVERIFIED | UNVERIFIED |
+| `/health` Git SHA match | UNVERIFIED | UNVERIFIED |
 | Cloud Run URL | UNVERIFIED | UNVERIFIED |
 | Cloud Run revision | UNVERIFIED | UNVERIFIED |
-| `/healthz` runtime | UNVERIFIED | UNVERIFIED |
-| `/healthz` store | UNVERIFIED | UNVERIFIED |
-| `/healthz` queue | UNVERIFIED | UNVERIFIED |
-| `/healthz` model/framework | UNVERIFIED | UNVERIFIED |
-| `/healthz` live mission/call/output limits | UNVERIFIED | UNVERIFIED |
+| `/health` runtime | UNVERIFIED | UNVERIFIED |
+| `/health` store | UNVERIFIED | UNVERIFIED |
+| `/health` queue | UNVERIFIED | UNVERIFIED |
+| `/health` model/framework | UNVERIFIED | UNVERIFIED |
+| `/health` live mission/call/output limits | UNVERIFIED | UNVERIFIED |
 | Real poisoned mission id | UNVERIFIED | UNVERIFIED |
 | Real poisoned engine/verdict | UNVERIFIED | UNVERIFIED |
 | Real poisoned receipt | UNVERIFIED | UNVERIFIED |

@@ -15,7 +15,7 @@ client = TestClient(app)
 
 
 def test_health_discloses_when_gemini_is_not_configured() -> None:
-    response = client.get("/healthz")
+    response = client.get("/health")
     assert response.status_code == 200
     payload = response.json()
     assert payload["model"] == "gemini-3.5-flash"
@@ -24,6 +24,10 @@ def test_health_discloses_when_gemini_is_not_configured() -> None:
     assert payload["liveMissionTotalLimit"] == 0
     assert payload["maxLlmCallsPerMission"] == 8
     assert payload["maxOutputTokensPerCall"] == 2_048
+
+
+def test_legacy_healthz_alias_matches_cloud_run_safe_health_path() -> None:
+    assert client.get("/healthz").json() == client.get("/health").json()
 
 
 def test_poisoned_demo_is_quarantined_with_receipt() -> None:
@@ -133,7 +137,7 @@ def test_registry_proxy_turns_upstream_timeout_into_bounded_error(monkeypatch) -
 
 
 def test_security_headers_are_applied() -> None:
-    response = client.get("/healthz")
+    response = client.get("/health")
     assert response.headers["x-frame-options"] == "DENY"
     assert "frame-ancestors 'none'" in response.headers["content-security-policy"]
 

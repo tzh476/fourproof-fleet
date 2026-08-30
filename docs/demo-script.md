@@ -12,7 +12,7 @@ Show the hero and the three policy outcomes.
 
 “An operator submits one AgentCard. Cloud Run accepts the mission, Firestore stores its durable state and atomically reserves a Git-bound live budget, and Pub/Sub triggers an authenticated worker. A Google ADK workflow fans out to Registry Scout, Identity Verifier, and Tool Guard. Gemini 3.5 Flash produces typed reports, then Policy Judge fans them back in. Every mission is capped at eight model calls and 2,048 output tokens per call. The result is sealed to a canonical SHA-256 receipt.”
 
-Show `docs/architecture.svg`, then `/healthz` with `[MODEL]`, `google-adk`, `firestore`, `pubsub`, and `cloud_run` visible.
+Show `docs/architecture.svg`, then `/health` with `[MODEL]`, `google-adk`, `firestore`, `pubsub`, and `cloud_run` visible.
 
 ## 0:55-2:05 — Poisoned mission
 

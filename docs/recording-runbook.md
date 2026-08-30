@@ -5,7 +5,7 @@ Use this only after `scripts/live_proof.py` passes against the final Cloud Run r
 ## Before pressing record
 
 - Use the exact Git SHA, Cloud Run URL, and remaining live-mission budget recorded by the proof script.
-- Open only these prepared tabs: product UI, `/healthz`, architecture PNG, Cloud Run revision, Firestore mission document, Pub/Sub subscription.
+- Open only these prepared tabs: product UI, `/health`, architecture PNG, Cloud Run revision, Firestore mission document, Pub/Sub subscription.
 - Collapse account menus and hide project/account identifiers that are not necessary evidence.
 - Close terminals or browser tabs containing tokens, billing details, email, cookies, environment variables, or unrelated work.
 - Set browser zoom so the `.run.app` hostname, verdict, evidence-set hash, receipt, and mission id remain legible.
@@ -16,7 +16,7 @@ Use this only after `scripts/live_proof.py` passes against the final Cloud Run r
 | Time | Screen | Non-negotiable evidence |
 |---|---|---|
 | 0:00–0:25 | Hero | Specific enterprise AgentCard onboarding problem and three bounded outcomes |
-| 0:25–0:55 | Architecture → `/healthz` | Cloud Run, Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, allowlist, final Git SHA, 8-call/2,048-token ceilings |
+| 0:25–0:55 | Architecture → `/health` | Cloud Run, Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, allowlist, final Git SHA, 8-call/2,048-token ceilings |
 | 0:55–2:05 | Live poisoned | `.run.app/agentcards/poisoned.json`, no `demo_case`, `engine=gemini_adk`, blocked guard, quarantine, evidence-set hash, receipt |
 | 2:05–2:40 | Live safe | Benign card remains human review or isolated sandbox; never production activation |
 | 2:40–3:15 | Firestore → Pub/Sub → logs | Same mission id, durable terminal document and Git-bound budget, authenticated OIDC audience, correlated structured log |
