@@ -27,7 +27,7 @@ The autonomous action is the onboarding decision itself: the system collects evi
 1. Open the [public demo](https://fourproof-fleet-7bow5ev35a-uc.a.run.app) and inspect the completed Gemini/ADK mission timeline, quarantine verdict, evidence-set hash, and decision receipt.
 2. Open [`/health`](https://fourproof-fleet-7bow5ev35a-uc.a.run.app/health) to verify Cloud Run, Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, bounded model calls, and executable Git SHA `6c1c35c…`.
 3. Compare the UI with the [sanitized cloud proof](docs/live-gcp-proof.json), which records the same mission id, seven stages, durable state, authenticated queue delivery, correlated logs, and hashes.
-4. Review the [architecture diagram](docs/architecture.png), then run `npm run check` to reproduce 13 frontend tests, 45 backend tests, type checking, and the production build.
+4. Review the [architecture diagram](docs/architecture.png), then run `npm run check` to reproduce 14 frontend tests, 45 backend tests, type checking, and the production build.
 5. Watch the [continuous 3:01 demo](https://youtu.be/G2iZ4oLoTCE) for the Google Cloud console and end-to-end proof path.
 
 ## What the fleet does
@@ -68,7 +68,7 @@ Deployed probes use `/health` because Cloud Run reserves some URL paths ending i
 - URL credentials, loopback, link-local, private, reserved, multicast, and `.local` targets are blocked.
 - DNS is resolved before a live fetch; any private result fails closed.
 - Redirects are not followed and AgentCards are capped at 256 KB.
-- No target receives a secret, cookie, API key, wallet credential, or production tool capability.
+- No target receives a secret, cookie, API key, production credential, or production tool capability.
 - Pub/Sub execution requests require Google-issued OIDC plus an exact service-account email and audience match.
 - A code-level policy guard overrides any model attempt to allow an agent with injection, blocked endpoints, contradictory identity, or incomplete evidence.
 - One immutable AgentCard snapshot is shared across all parallel reviewers, and its hash is part of the final receipt.
@@ -132,7 +132,7 @@ After a mission reaches a terminal state, `POST /api/missions/{mission_id}/reche
 
 ## Deploy to Google Cloud
 
-The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it. The script refuses an uncommitted worktree, disabled billing, invalid resource names, or a missing action-time authorization acknowledgement. `.gcloudignore` is an explicit allowlist containing only the Dockerfile, package/build metadata, frontend source, public AgentCards, architecture SVG, and backend runtime source; tests, local environments, proof scripts, unrelated Cloudflare functions, and submission documents are not uploaded to Cloud Build.
+The repository includes [scripts/deploy-gcp.sh](scripts/deploy-gcp.sh). It is intentionally not executed automatically because it creates billable cloud resources and IAM bindings. Review it, authenticate `gcloud`, select a billing-enabled project, then set every required `FOURPROOF_*` variable before running it. The script refuses an uncommitted worktree, disabled billing, invalid resource names, or a missing action-time authorization acknowledgement. `.gcloudignore` is an explicit allowlist containing only the Dockerfile, package/build metadata, frontend source, public AgentCards, architecture SVG, and backend runtime source; tests, local environments, proof scripts, and submission documents are not uploaded to Cloud Build.
 
 ```bash
 export FOURPROOF_PROJECT_ID="your-billing-enabled-project"
@@ -186,7 +186,7 @@ python3 scripts/live_proof.py \
 
 Verified locally and against the bounded Google Cloud deployment on 2026-08-31:
 
-- 13 frontend/domain tests passed;
+- 14 frontend/domain tests passed;
 - 45 Python API/security/ADK graph/queue/live-proof tests passed;
 - TypeScript production build passed;
 - Python dependency consistency passed;

@@ -1,6 +1,5 @@
 import asyncio
 
-import httpx
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -121,19 +120,17 @@ def test_terminal_mission_can_create_linked_reproducible_review() -> None:
     assert second["verdict"]["receipt_sha256"] == first["verdict"]["receipt_sha256"]
 
 
-def test_registry_proxy_rejects_arbitrary_paths_without_upstream_call() -> None:
-    response = client.get("/api/8004scan/admin/secrets")
-    assert response.status_code == 404
+def test_removed_legacy_market_route_is_not_an_api() -> None:
+    response = client.get("/api/legacy-market/agents")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+    assert '<div id="root"></div>' in response.text
 
 
-def test_registry_proxy_turns_upstream_timeout_into_bounded_error(monkeypatch) -> None:
-    async def raise_timeout(*args, **kwargs):
-        raise httpx.ReadTimeout("bounded timeout")
-
-    monkeypatch.setattr(httpx.AsyncClient, "get", raise_timeout)
-    response = client.get("/api/8004scan/agents?chain_id=56&limit=12")
-    assert response.status_code == 502
-    assert response.json()["detail"] == "live registry upstream is temporarily unavailable"
+def test_security_policy_allows_only_same_origin_connections() -> None:
+    policy = client.get("/health").headers["content-security-policy"]
+    assert "connect-src 'self'" in policy
+    assert "connect-src 'self' https:" not in policy
 
 
 def test_security_headers_are_applied() -> None:

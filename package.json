@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "dev:api": "PYTHONPATH=backend .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8080 --reload",
-    "dev:pages": "npm run build && wrangler pages dev dist --ip 127.0.0.1",
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false",
@@ -17,9 +16,7 @@
   },
   "dependencies": {
     "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "viem": "2.56.0",
-    "zod": "4.5.2"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.3",

@@ -12,7 +12,6 @@ from pathlib import Path
 from time import monotonic
 from urllib.parse import urlsplit
 
-import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -57,7 +56,7 @@ async def add_security_headers(request: Request, call_next):
         "Content-Security-Policy",
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; "
-        "connect-src 'self' https://bsc-dataseed.bnbchain.org; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
+        "connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
     )
     return response
 
@@ -191,39 +190,6 @@ async def fixture(case: str) -> dict[str, object]:
         return fixture_for(case)
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@app.get("/api/8004scan/{path:path}")
-async def proxy_8004scan(path: str, request: Request) -> Response:
-    if path != "agents" and not re.fullmatch(r"agents/56/\d+", path):
-        raise HTTPException(status_code=404, detail="unsupported 8004scan route")
-    query: dict[str, str] = {}
-    if request.query_params.get("chain_id") is not None:
-        query["chain_id"] = "56"
-    search = (request.query_params.get("search") or "").strip()[:80]
-    if search:
-        query["search"] = search
-    try:
-        requested_limit = int(request.query_params.get("limit", "12"))
-    except ValueError:
-        requested_limit = 12
-    query["limit"] = str(min(20, max(1, requested_limit)))
-    try:
-        async with httpx.AsyncClient(timeout=8.0, follow_redirects=False) as client:
-            upstream = await client.get(
-                f"https://api.8004scan.io/api/v1/{path}",
-                params=query,
-                headers={"Accept": "application/json", "User-Agent": "FourProof-Fleet/0.1"},
-            )
-    except httpx.HTTPError as error:
-        logger.warning(json.dumps({"event": "registry_upstream_failed", "error_type": type(error).__name__}))
-        raise HTTPException(status_code=502, detail="live registry upstream is temporarily unavailable") from error
-    return Response(
-        content=upstream.content,
-        status_code=upstream.status_code,
-        media_type=upstream.headers.get("content-type", "application/json").split(";", 1)[0],
-        headers={"Cache-Control": "public, max-age=20, s-maxage=60", "X-Content-Type-Options": "nosniff"},
-    )
 
 
 async def enqueue_mission(

@@ -7,7 +7,7 @@ SAFE_AGENT_CARD: dict[str, Any] = {
     "name": "Invoice Reconciliation Scout",
     "description": "Reads redacted invoice totals and returns a discrepancy report for human review.",
     "version": "1.4.2",
-    "url": "https://fourproof-bnb.pages.dev/agents/rebalancing/a2a",
+    "url": "https://fourproof-fleet-7bow5ev35a-uc.a.run.app/agentcards/safe.json",
     "capabilities": {"streaming": False, "pushNotifications": False, "stateTransitionHistory": True},
     "skills": [
         {
@@ -18,9 +18,8 @@ SAFE_AGENT_CARD: dict[str, Any] = {
         }
     ],
     "identity": {
-        "registry": "eip155:56:0x8004a169fb4a3325136eb29fa0ceb6d2e539a432",
-        "tokenId": "demo-safe",
-        "owner": "0x1111111111111111111111111111111111111111",
+        "catalog": "enterprise-demo",
+        "publisher": "self-declared",
         "verification": "declared-demo",
     },
     "controls": ["no-custody", "no-payment", "redacted-input-only", "human-approval-required"],
