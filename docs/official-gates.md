@@ -1,6 +1,6 @@
-# Official rules evidence and applicant-owned gates
+# Official requirements and submission evidence
 
-Current official sources: [contest overview](https://allthingsagentichackathon.devpost.com/) and [official rules](https://allthingsagentichackathon.devpost.com/rules). Observed on 2026-08-30. This file records requirements; it does not accept them or certify the applicant.
+Current official sources: [contest overview](https://allthingsagentichackathon.devpost.com/) and [official rules](https://allthingsagentichackathon.devpost.com/rules). Requirements were observed on 2026-08-30 and the public submission evidence was rechecked on 2026-08-31.
 
 ## Directly observed requirements
 
@@ -23,13 +23,12 @@ Official Google documentation was rechecked on 2026-08-31 before treating billin
 
 The project will not weaken or relabel its architecture merely to obtain a nominal free URL. A different runtime would need its own implementation, tests, architecture, video proof, and truthful framework claims.
 
-## Applicant-owned actions
+## Verified submission evidence
 
-- Determine personal eligibility and employer-policy compliance.
-- Read and accept the binding contest rules and privacy terms.
-- Choose the billing-enabled Google Cloud project and state a hard authorization ceiling for the deployment attempt.
-- Separately authorize any public Cloud Run access, repository publication or repository sharing, and YouTube/Vimeo publication.
-- Verify third-party data, open-source license, reuse, ownership, and AI-assistance disclosures.
-- Perform the final Devpost submission and retain its confirmation.
+- Cloud Run revision `fourproof-fleet-00014-d5p` serves executable Git SHA `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` with Firestore and Pub/Sub.
+- One non-fixture Gemini 3.5 Flash mission completed through Google ADK 2.8.0 and produced a durable quarantine receipt with correlated Cloud Logging evidence.
+- The public 180.903-second English video at `https://youtu.be/G2iZ4oLoTCE` visibly demonstrates the Google Cloud backend and states that it was created for the All Things Agentic Hackathon.
+- The public repository at `https://github.com/tzh476/fourproof-fleet` contains reproducibility instructions, the architecture diagram, tests, and sanitized cloud proof.
+- The public project at `https://devpost.com/software/fourproof-fleet` is submitted to the All Things Agentic Hackathon; the authenticated manage page showed `SUBMITTED` and 5/5 steps done.
 
-Until each relevant action is explicitly confirmed, its corresponding field in `docs/live-gcp-qa.md` remains `UNVERIFIED`.
+Personal eligibility remains governed by the official rules. Submission, deployment, and publication evidence do not imply shortlist, placement, award, or payment.

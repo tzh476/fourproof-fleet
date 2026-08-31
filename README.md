@@ -154,7 +154,7 @@ python3 scripts/live_proof.py \
 
 ## Submission assets
 
-- [Devpost text draft](docs/submission-draft.md)
+- [submitted Devpost project copy](docs/submission-draft.md)
 - [3:35 demo script](docs/demo-script.md)
 - [top-five judging scorecard](docs/judging-scorecard.md)
 - [architecture source](docs/architecture.svg) and [1600×900 PNG](docs/architecture.png)
@@ -162,7 +162,7 @@ python3 scripts/live_proof.py \
 - [threat model](docs/threat-model.md) and [live cloud proof checklist](docs/cloud-proof-checklist.md)
 - [official Google Cloud cost model and deployment gates](docs/cost-boundary.md)
 - [continuous recording runbook](docs/recording-runbook.md)
-- [official rules evidence and applicant-owned gates](docs/official-gates.md)
+- [official requirements and submission evidence](docs/official-gates.md)
 
 ## Verification status
 

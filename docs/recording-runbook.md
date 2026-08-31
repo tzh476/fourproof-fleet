@@ -1,6 +1,6 @@
 # Continuous four-minute recording runbook
 
-Use this only after `scripts/live_proof.py` passes against the final Cloud Run revision. The applicant owns recording, public YouTube/Vimeo publication, platform declarations, and final submission. The official limit is four minutes; the recording must be in English or include English subtitles.
+This runbook records how the final continuous demo was produced after `scripts/live_proof.py` passed against the final Cloud Run revision. The resulting 180.903-second English video is public at `https://youtu.be/G2iZ4oLoTCE` and is linked from the submitted Devpost entry. The official limit is four minutes.
 
 ## Before pressing record
 

@@ -29,5 +29,5 @@ evidence column.
 | Automated sanitized live-proof JSON | VERIFIED | [`live-gcp-proof.json`](live-gcp-proof.json) |
 | Billing/project usage after proof vs applicant ceiling | UNVERIFIED | no provider-enforced USD hard cap is claimed |
 | Local final video duration ≤4:00 | VERIFIED | 180.902667 seconds, 1920×1080 H.264/AAC, full decode passed |
-| Public YouTube/Vimeo URL | UNVERIFIED | publication remains applicant-owned |
-| Devpost receipt | UNVERIFIED | project creation remains CAPTCHA-gated; no submission claimed |
+| Public YouTube/Vimeo URL | VERIFIED | `https://youtu.be/G2iZ4oLoTCE`, public, 180.903 seconds, English, with the required hackathon-purpose disclosure |
+| Devpost receipt | VERIFIED | `https://devpost.com/software/fourproof-fleet`; authenticated manage page showed `SUBMITTED` and 5/5 steps done, and the public page named the All Things Agentic Hackathon |

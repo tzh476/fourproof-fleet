@@ -1,6 +1,6 @@
-# Devpost submission draft
+# Devpost submission copy
 
-This is working copy, not a submitted entry. The applicant must verify every declaration and perform the final submission personally.
+This is the evidence-backed working copy for the submitted [FourProof Fleet Devpost entry](https://devpost.com/software/fourproof-fleet). The public project page and authenticated manage page were verified after submission on 2026-08-31.
 
 ## Project name
 
@@ -83,10 +83,9 @@ Run `npm run check` for frontend tests, backend/security tests, TypeScript check
 
 FourProof Fleet was created specifically for the All Things Agentic Hackathon during the contest submission period. Its Google ADK workflow, Gemini agent graph, mission API, safety boundary, Firestore/Pub/Sub execution, evidence receipts, deployment materials, and enterprise onboarding flow were built for this entry.
 
-## Applicant-owned final checks
+## Submission evidence
 
-- Confirm the project disclosure satisfies the official rules.
-- Confirm every team member, eligibility, privacy, and IP statement.
-- Accept any rules, terms, or declarations personally.
-- Verify the public demo, repository, video, architecture, and all written claims.
-- Perform the final Devpost submission and preserve the receipt.
+- Devpost: `https://devpost.com/software/fourproof-fleet` — submitted to the All Things Agentic Hackathon.
+- Public demo: `https://fourproof-fleet-7bow5ev35a-uc.a.run.app` — Cloud Run health and UI verified.
+- Public repository: `https://github.com/tzh476/fourproof-fleet` — reproducibility instructions, architecture, tests, and sanitized cloud proof.
+- Public video: `https://youtu.be/G2iZ4oLoTCE` — 180.903-second English demo with visible Google Cloud backend proof.
