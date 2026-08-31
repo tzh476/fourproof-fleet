@@ -25,8 +25,8 @@ The autonomous action is the onboarding decision itself: the system collects evi
 ## Judge it in 90 seconds
 
 1. Open the [public demo](https://fourproof-fleet-7bow5ev35a-uc.a.run.app) and inspect the completed Gemini/ADK mission timeline, quarantine verdict, evidence-set hash, and decision receipt.
-2. Open [`/health`](https://fourproof-fleet-7bow5ev35a-uc.a.run.app/health) to verify Cloud Run, Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, bounded model calls, and executable Git SHA `6c1c35c…`.
-3. Compare the UI with the [sanitized cloud proof](docs/live-gcp-proof.json), which records the same mission id, seven stages, durable state, authenticated queue delivery, correlated logs, and hashes.
+2. Open [`/health`](https://fourproof-fleet-7bow5ev35a-uc.a.run.app/health) to verify Cloud Run, Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, bounded model calls, and current deployed Git SHA `8145025…`.
+3. Compare the UI with the [sanitized cloud proof](docs/live-gcp-proof.json), which records the same mission id, seven stages, durable state, authenticated queue delivery, correlated logs, hashes, and the original proof executable `6c1c35c…`. The UI labels that provenance explicitly and retrieves the preserved Firestore mission read-only.
 4. Review the [architecture diagram](docs/architecture.png), then run `npm run check` to reproduce 14 frontend tests, 45 backend tests, type checking, and the production build.
 5. Watch the [continuous 3:01 demo](https://youtu.be/G2iZ4oLoTCE) for the Google Cloud console and end-to-end proof path.
 
@@ -190,10 +190,13 @@ Verified locally and against the bounded Google Cloud deployment on 2026-08-31:
 - 45 Python API/security/ADK graph/queue/live-proof tests passed;
 - TypeScript production build passed;
 - Python dependency consistency passed;
-- browser QA loaded the public Cloud Run UI and verified the completed Gemini/ADK mission timeline, quarantine verdict, and separate evidence and decision hashes;
+- browser QA loaded the public Cloud Run UI with zero console errors or warnings and verified the completed Gemini/ADK mission timeline, quarantine verdict, and separate evidence and decision hashes;
+- the public page made only `GET /health` and `GET /api/missions/aa919f3a…` API requests during proof loading; no mission was created or model invoked;
+- the 390 px mobile viewport had `clientWidth=390` and `scrollWidth=390`, with no horizontal overflow;
 - the production-built UI ran the poisoned mission end to end and sealed a `quarantine` receipt;
-- public commit `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` is served by Cloud Run revision `fourproof-fleet-00014-d5p`;
-- one non-fixture Gemini 3.5 Flash / Google ADK mission completed with `quarantine`, durable Firestore state, Pub/Sub delivery, six correlated log entries, and separate evidence/decision hashes recorded in [`docs/live-gcp-proof.json`](docs/live-gcp-proof.json);
+- public commit `814502510979d7ea144aa395dec8948a6d2c9195` is served by Cloud Run revision `fourproof-fleet-00016-swp` at 100% traffic;
+- one non-fixture Gemini 3.5 Flash / Google ADK mission originally ran on executable `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` and completed with `quarantine`, durable Firestore state, Pub/Sub delivery, six correlated log entries, and separate evidence/decision hashes recorded in [`docs/live-gcp-proof.json`](docs/live-gcp-proof.json);
+- the current revision's Git-bound live-budget document is absent and its `mission_stage` log query is empty, confirming this presentation update made zero new Gemini calls;
 - the local final English video is 180.902667 seconds, 1920×1080 H.264/AAC, and passed full decode plus four-frame visual inspection;
 - `npm audit` reported zero vulnerabilities.
 

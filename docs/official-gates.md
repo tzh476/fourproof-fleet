@@ -25,8 +25,9 @@ The project will not weaken or relabel its architecture merely to obtain a nomin
 
 ## Verified submission evidence
 
-- Cloud Run revision `fourproof-fleet-00014-d5p` serves executable Git SHA `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` with Firestore and Pub/Sub.
-- One non-fixture Gemini 3.5 Flash mission completed through Google ADK 2.8.0 and produced a durable quarantine receipt with correlated Cloud Logging evidence.
+- Cloud Run revision `fourproof-fleet-00016-swp` serves current public Git SHA `814502510979d7ea144aa395dec8948a6d2c9195` with Firestore and Pub/Sub.
+- One non-fixture Gemini 3.5 Flash mission originally ran on executable `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` through Google ADK 2.8.0 and produced a durable quarantine receipt with correlated Cloud Logging evidence. The current UI identifies that executable and reads the preserved Firestore proof without invoking a model.
+- Public desktop and 390×844 mobile browser QA passed with zero console errors or warnings, no horizontal overflow, and only read-only health and proof API requests.
 - The public 180.903-second English video at `https://youtu.be/G2iZ4oLoTCE` visibly demonstrates the Google Cloud backend and states that it was created for the All Things Agentic Hackathon.
 - The public repository at `https://github.com/tzh476/fourproof-fleet` contains reproducibility instructions, the architecture diagram, tests, and sanitized cloud proof.
 - The public project at `https://devpost.com/software/fourproof-fleet` is submitted to the All Things Agentic Hackathon; the authenticated manage page showed `SUBMITTED` and 5/5 steps done.
