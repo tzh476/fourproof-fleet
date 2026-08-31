@@ -12,6 +12,24 @@ Enterprise agent catalogs make agents easy to discover, but discovery metadata i
 
 The product is built for the **Fortified Enterprise Fleet** category of the All Things Agentic Hackathon.
 
+### Operational before and after
+
+| Without FourProof Fleet | With FourProof Fleet |
+|---|---|
+| An operations coordinator forwards the same untrusted AgentCard to several reviewers and manually reconciles incompatible notes. | One URL queues an asynchronous review and three independent Google ADK specialists inspect discovery, identity, and tool safety in parallel. |
+| Publisher-controlled claims can drift between reviewers, leaving no exact record of what was inspected. | Every specialist shares one immutable, hashed snapshot; the final result includes a stable evidence-set hash and a separate run receipt. |
+| A persuasive description can become an accidental production approval. | Code-enforced policy permits only isolated sandbox, human review, or quarantine; incomplete or contradictory evidence cannot activate production access. |
+
+The autonomous action is the onboarding decision itself: the system collects evidence, applies bounded policy, persists the lifecycle state, and blocks an unsafe agent without requiring a security expert to steer each step.
+
+## Judge it in 90 seconds
+
+1. Open the [public demo](https://fourproof-fleet-7bow5ev35a-uc.a.run.app) and inspect the completed Gemini/ADK mission timeline, quarantine verdict, evidence-set hash, and decision receipt.
+2. Open [`/health`](https://fourproof-fleet-7bow5ev35a-uc.a.run.app/health) to verify Cloud Run, Firestore, Pub/Sub, Gemini 3.5 Flash, Google ADK 2.8.0, bounded model calls, and executable Git SHA `6c1c35c…`.
+3. Compare the UI with the [sanitized cloud proof](docs/live-gcp-proof.json), which records the same mission id, seven stages, durable state, authenticated queue delivery, correlated logs, and hashes.
+4. Review the [architecture diagram](docs/architecture.png), then run `npm run check` to reproduce 13 frontend tests, 45 backend tests, type checking, and the production build.
+5. Watch the [continuous 3:01 demo](https://youtu.be/G2iZ4oLoTCE) for the Google Cloud console and end-to-end proof path.
+
 ## What the fleet does
 
 1. **Registry Scout** fetches a bounded AgentCard and hashes the exact inspected bytes.
