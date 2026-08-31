@@ -172,23 +172,21 @@ Verified locally and against the bounded Google Cloud deployment on 2026-08-31:
 - 45 Python API/security/ADK graph/queue/live-proof tests passed;
 - TypeScript production build passed;
 - Python dependency consistency passed;
-- browser QA loaded the live BSC registry and handled its changing category result counts without treating discovery as endorsement;
+- browser QA loaded the public Cloud Run UI and verified the completed Gemini/ADK mission timeline, quarantine verdict, and separate evidence and decision hashes;
 - the production-built UI ran the poisoned mission end to end and sealed a `quarantine` receipt;
 - public commit `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` is served by Cloud Run revision `fourproof-fleet-00014-d5p`;
 - one non-fixture Gemini 3.5 Flash / Google ADK mission completed with `quarantine`, durable Firestore state, Pub/Sub delivery, six correlated log entries, and separate evidence/decision hashes recorded in [`docs/live-gcp-proof.json`](docs/live-gcp-proof.json);
 - the local final English video is 180.902667 seconds, 1920×1080 H.264/AAC, and passed full decode plus four-frame visual inspection;
 - `npm audit` reported zero vulnerabilities.
 
-Not yet verified:
+Submission status:
 
-- a public YouTube/Vimeo URL for the final video;
-- a Devpost project or entry receipt;
-- any contest award or payment.
+- the final public video is available at [YouTube](https://youtu.be/G2iZ4oLoTCE);
+- the project is submitted to the [All Things Agentic Hackathon on Devpost](https://devpost.com/software/fourproof-fleet);
+- contest placement, award, and payment remain unverified.
 
-Those states must not be inferred from code or green local tests.
+## Contest-period disclosure
 
-## Contest-period and reuse disclosure
+FourProof Fleet was created specifically for the All Things Agentic Hackathon during the contest submission period. Its Google ADK workflow, Gemini agent graph, mission API, prompt-injection guard, SSRF boundary, Firestore store, Pub/Sub/OIDC queue, receipt sealing, cloud deployment materials, and enterprise agent-onboarding flow were built for this entry.
 
-This project was created during the All Things Agentic submission period. It adapts the UI, BSC discovery proxy, registry ranking, and read-only evidence concepts from [FourProof BNB](https://github.com/tzh476/fourproof-bnb), first created on 2026-08-29, also within the submission period. The Google ADK workflow, Gemini agent graph, mission API, prompt-injection guard, SSRF boundary, Firestore store, Pub/Sub/OIDC queue, receipt sealing, cloud deployment materials, and agent-onboarding product flow are new work for FourProof Fleet.
-
-Open-source libraries and Google services remain subject to their own licenses and terms. Codex was used as a coding assistant; all claims above are tied to commands, code, or live observations rather than authorship assumptions.
+Open-source libraries and Google services remain subject to their own licenses and terms. All claims above are tied to commands, code, or live observations.

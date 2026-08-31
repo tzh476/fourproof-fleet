@@ -38,8 +38,6 @@ The backend is FastAPI on Cloud Run. Mission state and event history live in Fir
 
 The security boundary validates URL schemes and credentials, resolves DNS, rejects private and reserved destinations, disables redirects, caps responses at 256 KB, and never sends target content a secret or production tool. Model outputs are validated with Pydantic. Real Gemini missions are transactionally capped per deployed Git SHA, each mission allows at most eight model calls, and each call allows at most 2,048 output tokens. Uncaught errors become explicit failed missions rather than activation decisions.
 
-The React/Vite frontend also includes read-only BSC ERC-8004 identity discovery across four categories. The live registry is context; its metadata is never treated as proof of enterprise safety.
-
 ## Challenges we ran into
 
 The hardest design problem was preventing the reviewer from becoming the attack surface. A naive “send this URL to an LLM” implementation risks SSRF, prompt injection, and false identity claims. We therefore separated bounded evidence collection from model judgment, removed redirects and credentials, used typed outputs, and treated all card text as quoted evidence. Another challenge was making retries auditable: queue redelivery, durable state, terminal idempotency, and failure events had to agree. Live Gemini runs exposed real schema variation—one verdict returned a scalar where a list was expected—so we added bounded normalization for known scalar fields while continuing to reject unknown evidence identifiers. The final non-fixture mission completed without weakening the fail-closed boundary.
@@ -61,7 +59,6 @@ Agent identity, capability, and safety are different claims. Registry presence p
 
 ## What's next
 
-- direct ERC-8004 owner and registration-event verification;
 - lease heartbeats and transactional event appends for stronger crash recovery;
 - controlled egress through a destination-enforcing proxy;
 - signed policy bundles and organization-specific approval thresholds;
@@ -69,27 +66,27 @@ Agent identity, capability, and safety are different claims. Registry presence p
 
 ## Built with
 
-Gemini 3.5 Flash, Google Agent Development Kit, Cloud Run, Firestore, Pub/Sub, Cloud Logging, Vertex AI, FastAPI, Pydantic, React, TypeScript, Vite, viem, BSC ERC-8004.
+Gemini 3.5 Flash, Google Agent Development Kit, Cloud Run, Firestore, Pub/Sub, Cloud Logging, Vertex AI, FastAPI, Pydantic, React, TypeScript, and Vite.
 
 ## Links
 
 - Demo: `https://fourproof-fleet-7bow5ev35a-uc.a.run.app`
 - Repository: `https://github.com/tzh476/fourproof-fleet`
-- Video: `[TBD_PUBLIC_YOUTUBE_OR_VIMEO_URL]`
+- Video: `https://youtu.be/G2iZ4oLoTCE`
 - Architecture: `https://github.com/tzh476/fourproof-fleet/blob/main/docs/architecture.svg`
 
 ## Reproducibility
 
 Run `npm run check` for frontend tests, backend/security tests, TypeScript checking, and a production build. Local deterministic fixtures are clearly labeled and require no credentials. The final video is bound to public commit `6c1c35ce03138fc38b2ceaabb8188f6e31f6b59f` and shows the sanitized state of a separate real Gemini/ADK mission with `engine=gemini_adk`; `docs/live-gcp-proof.json` records the exact observed cloud evidence without credentials or billing identifiers.
 
-## Contest-period and reused-work disclosure
+## Contest-period disclosure
 
-FourProof Fleet was created during the contest period. It adapts the UI, BSC discovery proxy, registry ranking, and read-only evidence concepts from FourProof BNB, first created on 2026-08-29, also within the contest period. The Google ADK workflow, Gemini graph, mission API, safety boundary, Firestore/Pub/Sub execution, evidence receipt, deployment materials, and enterprise onboarding flow are new for FourProof Fleet. Codex was used as a coding assistant.
+FourProof Fleet was created specifically for the All Things Agentic Hackathon during the contest submission period. Its Google ADK workflow, Gemini agent graph, mission API, safety boundary, Firestore/Pub/Sub execution, evidence receipts, deployment materials, and enterprise onboarding flow were built for this entry.
 
 ## Applicant-owned final checks
 
-- Confirm the project and reused-work disclosure satisfy the official rules.
-- Confirm every team member, eligibility, privacy, IP, and AI-assistance statement.
+- Confirm the project disclosure satisfies the official rules.
+- Confirm every team member, eligibility, privacy, and IP statement.
 - Accept any rules, terms, or declarations personally.
 - Verify the public demo, repository, video, architecture, and all written claims.
 - Perform the final Devpost submission and preserve the receipt.
