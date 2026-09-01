@@ -23,6 +23,7 @@ from .fixtures import fixture_for
 from .models import MissionEvent, MissionRecord, MissionRequest
 from .orchestrator import deterministic_demo, gemini_adk_run
 from .queue import publish_mission, pubsub_topic, verify_pubsub_oidc
+from .serpapi import serpapi_configured
 from .store import MissionStore, get_store
 
 
@@ -171,6 +172,7 @@ async def health() -> dict[str, object]:
         "model": "gemini-3.5-flash",
         "googleAdk": "2.8.0",
         "geminiConfigured": has_gemini_auth(),
+        "serpApiConfigured": serpapi_configured(),
         "store": "firestore" if os.getenv("FIRESTORE_ENABLED") == "1" else "memory",
         "queue": "pubsub" if pubsub_topic() else "in-process",
         "runtime": "google-cloud-run" if os.getenv("K_SERVICE") else "local",
